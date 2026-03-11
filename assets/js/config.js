@@ -6,6 +6,8 @@ export const defaultConfig = Object.freeze({
   notesPath: 'notes',
 });
 
+export const initialPasswordHash = 'wc:98e88fba67a35360940834467610b681d2b17a978980a869a08fd43f171b4547';
+
 export const storageKeys = Object.freeze({
   meta: 'devmemo_meta_v2',
   secret: 'devmemo_secret_v2',

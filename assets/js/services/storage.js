@@ -1,9 +1,8 @@
-import { defaultConfig, getNoteCacheKey, storageKeys } from '../config.js';
+import { defaultConfig, getNoteCacheKey, initialPasswordHash, storageKeys } from '../config.js';
 import { encryptJson, decryptJson } from './crypto-config.js';
-import { sha256 } from '../utils/hash.js';
 
 export async function loadMeta() {
-  const fallbackHash = await sha256('devmemo');
+  const fallbackHash = initialPasswordHash;
   const raw = localStorage.getItem(storageKeys.meta);
   if (!raw) return { notesPath: defaultConfig.notesPath, pwHash: fallbackHash };
   try {
@@ -56,7 +55,7 @@ export async function saveSecureConfig(config, password) {
   }, password);
   localStorage.setItem(storageKeys.secret, JSON.stringify(secret));
   localStorage.setItem(storageKeys.meta, JSON.stringify({
-    pwHash: config.pwHash || await sha256(password),
+    pwHash: config.pwHash || initialPasswordHash,
     notesPath: config.notesPath || defaultConfig.notesPath,
   }));
   setSessionState(config);

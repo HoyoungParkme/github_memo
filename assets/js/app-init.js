@@ -1,4 +1,5 @@
 import { appState } from './state.js';
+import { initialPasswordHash } from './config.js';
 import { sha256 } from './utils/hash.js';
 import { createGitHubApi } from './services/github-api.js';
 import { listFolders } from './services/tree-service.js';
@@ -20,7 +21,7 @@ export async function initApp() {
   bindGlobalActions();
   const meta = await loadMeta();
   appState.config.notesPath = meta.notesPath;
-  appState.config.pwHash = meta.pwHash;
+  appState.config.pwHash = meta.pwHash || initialPasswordHash;
 
   if (isAuthenticated()) {
     const sessionConfig = loadSessionConfig();
@@ -63,7 +64,11 @@ async function saveSetup() {
     showToast('Username, 레포, PAT은 필수야', 'error');
     return;
   }
-  const password = newPassword || appState.currentPassword || 'devmemo';
+  const password = newPassword || appState.currentPassword;
+  if (!password) {
+    showToast('현재 비밀번호를 다시 입력한 뒤 설정을 저장해', 'error');
+    return;
+  }
   appState.currentPassword = password;
   appState.config = { ...appState.config, owner, repo, pat: pat || appState.config.pat, pwHash: await sha256(password) };
   await saveSecureConfig(appState.config, password);
