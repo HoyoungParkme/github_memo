@@ -1,0 +1,82 @@
+.preview-area h1,
+.preview-area h2,
+.preview-area h3,
+.preview-area h4,
+.preview-area h5,
+.preview-area h6 {
+  margin: 1.4em 0 .6em;
+  line-height: 1.3;
+}
+
+.preview-area h1 {
+  font-size: 22px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: .4em;
+}
+
+.preview-area h2 {
+  font-size: 18px;
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: .3em;
+}
+
+.preview-area h3 {
+  color: var(--accent);
+}
+
+.preview-area p,
+.preview-area ul,
+.preview-area ol,
+.preview-area blockquote,
+.preview-area table,
+.preview-area pre {
+  margin: .9em 0;
+}
+
+.preview-area ul,
+.preview-area ol {
+  padding-left: 1.6em;
+}
+
+.preview-area blockquote {
+  padding: .5em 1em;
+  border-left: 3px solid var(--accent);
+  background: var(--bg-2);
+}
+
+.preview-area code {
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: var(--bg-2);
+  font-family: var(--font-mono);
+}
+
+.preview-area pre {
+  position: relative;
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-2) !important;
+}
+
+.preview-area pre code {
+  display: block;
+  padding: 16px;
+  background: none;
+}
+
+.preview-area table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.preview-area th,
+.preview-area td {
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+}
+
+.preview-area img {
+  max-width: 100%;
+  border-radius: var(--radius);
+}

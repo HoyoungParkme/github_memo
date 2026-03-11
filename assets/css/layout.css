@@ -1,0 +1,165 @@
+#app {
+  display: none;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.header {
+  height: var(--header-height);
+  background: var(--bg-1);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding-right: 12px;
+  gap: 8px;
+}
+
+.header-logo,
+.sidebar {
+  width: var(--sidebar-width);
+  min-width: var(--sidebar-width);
+}
+
+.header-logo {
+  height: 100%;
+  padding: 0 12px;
+  display: flex;
+  align-items: center;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: var(--accent);
+  border-right: 1px solid var(--border);
+}
+
+.header-logo span {
+  color: var(--text-muted);
+  font-weight: 300;
+}
+
+.header-breadcrumb,
+.save-status {
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+}
+
+.header-breadcrumb {
+  flex: 1;
+  padding-left: 16px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.header-actions,
+.sidebar-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.header-btn,
+.sidebar-action-btn {
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+}
+
+.header-btn {
+  width: 30px;
+  height: 30px;
+}
+
+.sidebar-action-btn {
+  width: 20px;
+  height: 20px;
+}
+
+.header-save-btn,
+.sidebar-new-btn,
+.empty-action {
+  border-radius: var(--radius);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.header-save-btn {
+  padding: 6px 14px;
+  background: var(--accent);
+  color: #fff;
+}
+
+.header-save-btn.is-busy {
+  opacity: .6;
+  cursor: not-allowed;
+}
+
+.body,
+.sidebar,
+.editor-area,
+#editor-container {
+  display: flex;
+}
+
+.body,
+.editor-content,
+.editor-area,
+.sidebar,
+#editor-container {
+  overflow: hidden;
+}
+
+.body,
+.editor-area,
+.editor-content {
+  flex: 1;
+}
+
+.sidebar,
+.editor-area,
+#editor-container {
+  flex-direction: column;
+}
+
+.sidebar {
+  background: var(--bg-1);
+  border-right: 1px solid var(--border);
+}
+
+.sidebar-section {
+  padding: 8px;
+  border-bottom: 1px solid var(--border-subtle);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  display: flex;
+  justify-content: space-between;
+  text-transform: uppercase;
+}
+
+.sidebar-section-bottom {
+  margin-top: auto;
+}
+
+.file-tree,
+.tag-filter,
+.toc-list,
+.preview-area,
+.code-editor,
+.search-results {
+  overflow-y: auto;
+}
+
+.file-tree {
+  flex: 1;
+  padding: 4px 0;
+}
+
+.tag-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  max-height: 90px;
+  padding: 8px;
+}
