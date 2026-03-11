@@ -30,11 +30,9 @@
   </div></div>
   <div id="setup-screen"><div class="setup-card">
     <div class="setup-title">DevMemo 설정</div>
-    <div class="setup-desc">GitHub Pages 전용 정적 앱이야. 설정과 PAT은 브라우저에 암호화 저장되고, 복호화는 잠금 비밀번호로만 진행돼.</div>
+    <div class="setup-desc">개인 전용 배포 설정이야. 저장 대상은 <code>HoyoungParkme/github_memo</code>로 고정돼 있고, PAT만 브라우저에 암호화 저장돼.</div>
     <hr class="setup-divider">
-    <div class="setup-group"><label class="setup-label" for="cfg-owner">GitHub Username</label><input class="setup-input" id="cfg-owner" placeholder="your-username" autocomplete="off"></div>
-    <div class="setup-group"><label class="setup-label" for="cfg-repo">메모 저장 레포 이름</label><input class="setup-input" id="cfg-repo" placeholder="devmemo-notes" autocomplete="off"><div class="setup-note">Private 레포 권장. 기본 경로는 <code>notes/</code>야.</div></div>
-    <div class="setup-group"><label class="setup-label" for="cfg-pat">GitHub Personal Access Token</label><input class="setup-input" id="cfg-pat" type="password" placeholder="ghp_xxxxxxxxxxxx" autocomplete="off"><div class="setup-note">Fine-grained token 권장. 권한은 <code>Contents: Read &amp; Write</code>.</div></div>
+    <div class="setup-group"><label class="setup-label" for="cfg-pat">GitHub Personal Access Token</label><input class="setup-input" id="cfg-pat" type="password" placeholder="ghp_xxxxxxxxxxxx" autocomplete="off"><div class="setup-note">권한은 <code>Contents: Read &amp; Write</code>. 메모는 <code>notes/</code> 경로에 저장돼.</div></div>
     <div class="setup-group"><label class="setup-label" for="cfg-pw">새 비밀번호 <span>(선택)</span></label><input class="setup-input" id="cfg-pw" type="password" placeholder="현재 비밀번호 유지 시 비워두기" autocomplete="new-password"></div>
     <button class="setup-btn" id="setup-save-btn">저장하고 시작하기</button>
   </div></div>

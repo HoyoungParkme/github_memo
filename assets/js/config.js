@@ -1,6 +1,6 @@
 export const defaultConfig = Object.freeze({
-  owner: '',
-  repo: '',
+  owner: 'HoyoungParkme',
+  repo: 'github_memo',
   pat: '',
   pwHash: '',
   notesPath: 'notes',

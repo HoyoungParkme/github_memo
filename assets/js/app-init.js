@@ -51,7 +51,7 @@ async function handleUnlock() {
   }
   setSessionState(appState.config);
   hideLockScreen();
-  if (!appState.config.owner || !appState.config.repo || !appState.config.pat) {
+  if (!appState.config.pat) {
     showSetupScreen(appState.config);
     return;
   }
@@ -59,9 +59,9 @@ async function handleUnlock() {
 }
 
 async function saveSetup() {
-  const { owner, repo, pat, newPassword } = readSetupForm();
-  if (!owner || !repo || (!pat && !appState.config.pat)) {
-    showToast('Username, 레포, PAT은 필수야', 'error');
+  const { pat, newPassword } = readSetupForm();
+  if (!pat && !appState.config.pat) {
+    showToast('PAT은 필수야', 'error');
     return;
   }
   const password = newPassword || appState.currentPassword;
@@ -70,7 +70,7 @@ async function saveSetup() {
     return;
   }
   appState.currentPassword = password;
-  appState.config = { ...appState.config, owner, repo, pat: pat || appState.config.pat, pwHash: await sha256(password) };
+  appState.config = { ...appState.config, pat: pat || appState.config.pat, pwHash: await sha256(password) };
   await saveSecureConfig(appState.config, password);
   hideSetupScreen();
   await showWorkspace();

@@ -1,6 +1,6 @@
 # DevMemo
 
-GitHub Pages에 올려서 사용하는 정적 개발자 메모장이다.
+GitHub Pages에 올려서 사용하는 개인 전용 정적 개발자 메모장이다.
 백엔드 없이 브라우저가 GitHub API를 직접 호출해 메모를 읽고 저장한다.
 
 ## 현재 구조
@@ -33,19 +33,16 @@ GitHub Pages에 올려서 사용하는 정적 개발자 메모장이다.
 2. GitHub Pages를 `main` 브랜치 `/ (root)`로 설정한다.
 3. `https://[username].github.io/[repo]/` 주소로 접속한다.
 
-## 메모 저장소 준비
+## 저장 대상
 
-1. 메모 전용 GitHub 레포를 하나 더 만든다.
-2. Private 레포를 권장한다.
-3. Fine-grained Personal Access Token을 발급한다.
-4. 권한은 `Contents: Read and Write`만 부여한다.
+- 저장소는 `HoyoungParkme/github_memo` 로 고정되어 있다.
+- 메모 파일은 `notes/` 경로 아래에 저장된다.
+- PAT만 입력하면 바로 사용할 수 있다.
 
 ## 앱 초기 설정
 
 1. 처음 접속하면 배포 기본 비밀번호로 잠금을 해제한다.
-2. 설정 화면에서 아래 값을 입력한다.
-   - GitHub Username
-   - 메모 저장 레포 이름
+2. 설정 화면에서 아래 값만 입력한다.
    - Personal Access Token
    - 새 비밀번호(선택)
 
@@ -53,7 +50,7 @@ GitHub Pages에 올려서 사용하는 정적 개발자 메모장이다.
 
 - 설정값과 PAT은 브라우저 `localStorage`에 암호화 저장된다.
 - 복호화 키는 잠금 비밀번호에서 파생된다.
-- 정적 사이트 특성상 비밀번호 검증 정보는 클라이언트에 존재한다.
+- 정적 사이트 특성상 비밀번호 검증 정보와 저장 대상 정보는 클라이언트에 존재한다.
 - 공용 PC 사용과 브라우저 확장 프로그램에는 여전히 주의가 필요하다.
 
 ## 단축키
