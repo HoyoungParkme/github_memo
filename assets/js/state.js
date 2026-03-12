@@ -10,5 +10,4 @@ export const appState = {
   isDirty: false,
   tab: 'edit',
   fuse: null,
-  currentPassword: '',
 };

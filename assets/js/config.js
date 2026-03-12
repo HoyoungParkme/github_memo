@@ -1,22 +1,17 @@
 export const defaultConfig = Object.freeze({
-  owner: 'HoyoungParkme',
-  repo: 'github_memo',
-  pat: '',
-  pwHash: '',
   notesPath: 'notes',
+  pwHash: '',
 });
 
 export const initialPasswordHash = 'wc:98e88fba67a35360940834467610b681d2b17a978980a869a08fd43f171b4547';
 
 export const storageKeys = Object.freeze({
-  meta: 'devmemo_meta_v2',
-  secret: 'devmemo_secret_v2',
+  meta: 'devmemo_meta_v3',
   theme: 'devmemo_theme_v2',
-  auth: 'devmemo_auth_v2',
-  sessionConfig: 'devmemo_session_config_v2',
-  noteCachePrefix: 'devmemo_note_cache_v2:',
+  auth: 'devmemo_auth_v3',
+  noteCachePrefix: 'devmemo_note_cache_v3:',
 });
 
 export function getNoteCacheKey(config) {
-  return `${storageKeys.noteCachePrefix}${config.owner}/${config.repo}`;
+  return `${storageKeys.noteCachePrefix}${config.notesPath}`;
 }

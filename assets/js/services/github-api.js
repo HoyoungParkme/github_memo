@@ -1,20 +1,17 @@
 import { encodeBase64 } from '../utils/encoding.js';
 
-export function createGitHubApi(state) {
+export function createGitHubApi() {
   async function request(path, options = {}) {
-    const url = `https://api.github.com/repos/${state.config.owner}/${state.config.repo}/contents/${path}`;
+    const params = new URLSearchParams({ path });
+    const url = `/api/github?${params}`;
     const response = await fetch(url, {
-      ...options,
-      headers: {
-        Accept: 'application/vnd.github.v3+json',
-        Authorization: `token ${state.config.pat}`,
-        'Content-Type': 'application/json',
-        ...(options.headers || {}),
-      },
+      method: options.method || 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      ...(options.body ? { body: options.body } : {}),
     });
     if (!response.ok) {
       const error = await response.json().catch(() => ({}));
-      throw new Error(error.message || `GitHub API 오류: ${response.status}`);
+      throw new Error(error.message || `API 오류: ${response.status}`);
     }
     return response.json();
   }
