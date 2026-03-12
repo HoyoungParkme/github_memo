@@ -12,6 +12,7 @@ import { buildNoteIndex, buildSnippet, createFuse } from './services/index-servi
 import { fetchTree } from './services/tree-service.js';
 import { createFileActions } from './workspace-file-actions.js';
 import { getTrashItems, permanentDelete, restoreFromTrash, cleanExpiredItems, TRASH_EXPIRY_DAYS } from './services/trash-service.js';
+import { showContextMenu } from './ui/context-menu.js';
 
 export function createWorkspace(api) {
   const fileActions = createFileActions(api, load, openNote);
@@ -27,6 +28,15 @@ export function createWorkspace(api) {
     document.getElementById('new-note-footer-btn').onclick = openFileModal;
     document.getElementById('new-note-empty-btn').onclick = openFileModal;
     document.getElementById('new-folder-btn').onclick = openFolderModal;
+    // 사이드바 빈 공간 우클릭
+    document.getElementById('file-tree').addEventListener('contextmenu', (e) => {
+      if (e.target.closest('.tree-item')) return;
+      e.preventDefault();
+      showContextMenu(e.clientX, e.clientY, [
+        { label: '새 메모', action: openFileModal },
+        { label: '새 폴더', action: openFolderModal },
+      ]);
+    });
   }
 
   async function load() {
@@ -52,7 +62,10 @@ export function createWorkspace(api) {
     if (!confirmLeave()) return;
     try {
       const data = await api.getContent(file.path);
-      const parsed = parseFrontmatter(decodeBase64(data.content));
+      const decodedContent = decodeBase64(data.content);
+      // 콘텐츠 캐시 저장 (이후 이름변경/이동 시 GET 생략)
+      appState.contentCache[file.path] = decodedContent;
+      const parsed = parseFrontmatter(decodedContent);
       appState.currentFile = { path: file.path, sha: data.sha, frontmatter: parsed.frontmatter };
       appState.currentTags = Array.isArray(parsed.frontmatter.tags) ? parsed.frontmatter.tags : [];
       appState.isDirty = false;
@@ -74,10 +87,12 @@ export function createWorkspace(api) {
     try {
       const result = await api.putContent(appState.currentFile.path, content, `메모 업데이트: ${appState.currentFile.path}`, appState.currentFile.sha);
       appState.currentFile = { ...appState.currentFile, sha: result.content.sha, frontmatter };
+      // 저장 후 캐시 갱신
+      appState.contentCache[appState.currentFile.path] = content;
       appState.isDirty = false;
       setSaveState(`${new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })} 저장됨`);
       await load();
-      showToast('저장 완료', 'success');
+      showToast('저장되었습니다', 'success');
     } catch (error) {
       setSaveState('저장 실패');
       showToast(`저장 실패: ${error.message}`, 'error');
@@ -142,7 +157,7 @@ export function createWorkspace(api) {
   }
 
   function confirmLeave() {
-    return !(appState.isDirty && appState.currentFile) || window.confirm('저장하지 않은 변경사항이 있어. 버릴까?');
+    return !(appState.isDirty && appState.currentFile) || window.confirm('저장하지 않은 변경 사항이 있습니다. 버리고 이동할까요?');
   }
 
   function renderCurrent(body = getEditorBody()) {
@@ -171,7 +186,7 @@ export function createWorkspace(api) {
     list.innerHTML = '';
     const items = getTrashItems();
     if (!items.length) {
-      list.innerHTML = '<div class="trash-empty">휴지통이 비어있어요</div>';
+      list.innerHTML = '<div class="trash-empty">휴지통이 비어 있습니다</div>';
       return;
     }
     items.slice().reverse().forEach((item) => {
@@ -200,7 +215,7 @@ export function createWorkspace(api) {
           await restoreFromTrash(api, item);
           await load();
           renderTrashList(list);
-          showToast('복원됐어', 'success');
+          showToast('복원되었습니다', 'success');
         } catch (e) {
           restoreBtn.disabled = false;
           restoreBtn.textContent = '복원';
@@ -211,7 +226,7 @@ export function createWorkspace(api) {
       deleteBtn.className = 'trash-btn-delete';
       deleteBtn.textContent = '영구 삭제';
       deleteBtn.addEventListener('click', async () => {
-        if (!window.confirm('영구적으로 삭제할까? 되돌릴 수 없어.')) return;
+        if (!window.confirm('영구 삭제할까요? 이 작업은 되돌릴 수 없습니다.')) return;
         deleteBtn.disabled = true;
         try {
           await permanentDelete(api, item);

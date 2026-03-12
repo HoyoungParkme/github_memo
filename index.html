@@ -26,11 +26,11 @@
     <div class="lock-subtitle">박호영 개인 메모장</div>
     <div class="lock-input-wrap"><input type="password" class="lock-input" id="pw-input" placeholder="비밀번호 입력" autocomplete="current-password"></div>
     <button class="lock-btn" id="unlock-btn">잠금 해제</button><div class="lock-error" id="lock-error"></div>
-    <div class="lock-hint">초기 비밀번호는 배포자 설정값을 사용해.</div><button class="lock-reset-btn" id="reset-btn">설정 초기화 (비밀번호를 잊었을 때)</button>
+    <div class="lock-hint">초기 비밀번호는 배포자 설정값을 사용합니다.</div><button class="lock-reset-btn" id="reset-btn">설정 초기화 (비밀번호를 잊었을 때)</button>
   </div></div>
   <div id="setup-screen"><div class="setup-card">
     <div class="setup-title">메모 설정</div>
-    <div class="setup-desc">잠금 비밀번호를 변경할 수 있어.</div>
+    <div class="setup-desc">잠금 비밀번호를 변경할 수 있습니다.</div>
     <hr class="setup-divider">
     <div class="setup-group"><label class="setup-label" for="cfg-pw">새 비밀번호</label><input class="setup-input" id="cfg-pw" type="password" placeholder="새 비밀번호 입력" autocomplete="new-password"></div>
     <button class="setup-btn" id="setup-save-btn">변경하기</button>
@@ -43,12 +43,12 @@
         <div class="empty-state" id="empty-state"><div class="empty-icon">📝</div><div class="empty-title">메모를 선택하세요</div><div class="empty-desc">왼쪽에서 메모를 클릭하거나 새 메모를 만들어보세요</div><button class="empty-action" id="new-note-empty-btn">+ 새 메모 만들기</button></div>
         <div id="editor-container"><div class="editor-tabs"><button class="editor-tab active" data-tab="edit">✏️ 편집</button><button class="editor-tab" data-tab="preview">👁 미리보기</button><button class="editor-tab" data-tab="split">⬜ 분할</button></div><div class="editor-content" id="editor-content"><textarea class="code-editor" id="code-editor" spellcheck="false"></textarea><div class="preview-area" id="preview-area"></div></div><div class="meta-bar"><span class="meta-label">태그:</span><div class="meta-tags" id="meta-tags"></div><input class="meta-tag-input" id="tag-input" placeholder="태그 입력 후 Enter" maxlength="20"></div></div>
       </main>
-      <aside class="toc-panel"><div class="toc-header">목차</div><div class="toc-list" id="toc-list"><div class="toc-empty">메모를 열면 목차가 표시돼요</div></div></aside>
+      <aside class="toc-panel"><div class="toc-header">목차</div><div class="toc-list" id="toc-list"><div class="toc-empty">메모를 열면 목차가 표시됩니다</div></div></aside>
     </div>
   </div>
   <div class="search-overlay" id="search-overlay"><div class="search-modal"><div class="search-input-wrap"><span class="search-icon">🔍</span><input class="search-input" id="search-input" placeholder="메모 검색..."><span class="search-kbd">ESC</span></div><div class="search-results" id="search-results"><div class="search-empty">검색어를 입력하세요</div></div></div></div>
-  <div class="modal-overlay" id="new-file-modal"><div class="modal-box"><div class="modal-title">새 메모</div><input class="modal-input" id="new-file-name" placeholder="파일명 (예: binary-search)"><div class="modal-hint">notes/<span id="file-path-preview">파일명</span>.md 에 저장돼</div><select class="modal-input" id="new-file-folder"></select><div class="modal-actions"><button class="modal-cancel" data-close-modal="new-file-modal">취소</button><button class="modal-confirm" id="new-file-confirm">만들기</button></div></div></div>
-  <div class="modal-overlay" id="new-folder-modal"><div class="modal-box"><div class="modal-title">새 폴더</div><input class="modal-input" id="new-folder-name" placeholder="폴더명 (예: 알고리즘)"><div class="modal-hint">notes/<span id="folder-path-preview">폴더명</span>/ 로 만들어져</div><div class="modal-actions"><button class="modal-cancel" data-close-modal="new-folder-modal">취소</button><button class="modal-confirm" id="new-folder-confirm">만들기</button></div></div></div>
+  <div class="modal-overlay" id="new-file-modal"><div class="modal-box"><div class="modal-title">새 메모</div><input class="modal-input" id="new-file-name" placeholder="파일명 (예: binary-search)"><div class="modal-hint">notes/<span id="file-path-preview">파일명</span>.md 에 저장됩니다</div><select class="modal-input" id="new-file-folder"></select><div class="modal-actions"><button class="modal-cancel" data-close-modal="new-file-modal">취소</button><button class="modal-confirm" id="new-file-confirm">만들기</button></div></div></div>
+  <div class="modal-overlay" id="new-folder-modal"><div class="modal-box"><div class="modal-title">새 폴더</div><input class="modal-input" id="new-folder-name" placeholder="폴더명 (예: 알고리즘)"><div class="modal-hint">notes/<span id="folder-path-preview">폴더명</span>/ 로 생성됩니다</div><div class="modal-actions"><button class="modal-cancel" data-close-modal="new-folder-modal">취소</button><button class="modal-confirm" id="new-folder-confirm">만들기</button></div></div></div>
   <div class="toast-container" id="toast-container"></div>
   <div class="trash-overlay" id="trash-overlay">
     <div class="trash-modal">
@@ -57,7 +57,7 @@
         <button class="trash-close-btn" id="trash-close-btn">✕</button>
       </div>
       <div class="trash-list" id="trash-list">
-        <div class="trash-empty">휴지통이 비어있어요</div>
+        <div class="trash-empty">휴지통이 비어 있습니다</div>
       </div>
     </div>
   </div>

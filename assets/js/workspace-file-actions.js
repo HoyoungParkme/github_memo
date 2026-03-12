@@ -11,13 +11,13 @@ export function createFileActions(api, reload, openNote) {
 
   async function createNewFile() {
     const { name, folder } = readFileForm();
-    if (!name) return showToast('파일명을 입력해', 'error');
+    if (!name) return showToast('파일명을 입력해 주세요.', 'error');
     try {
       const created = await createNote(api, appState.config.notesPath, name, folder);
       closeAllModals();
       await reload();
       await openNote(created);
-      showToast('새 메모 생성 완료', 'success');
+      showToast('새 메모가 생성되었습니다.', 'success');
     } catch (error) {
       showToast(`생성 실패: ${error.message}`, 'error');
     }
@@ -25,12 +25,12 @@ export function createFileActions(api, reload, openNote) {
 
   async function createNewFolder() {
     const { name } = readFolderForm();
-    if (!name) return showToast('폴더명을 입력해', 'error');
+    if (!name) return showToast('폴더명을 입력해 주세요.', 'error');
     try {
       await createFolder(api, appState.config.notesPath, name);
       closeAllModals();
       await reload();
-      showToast('새 폴더 생성 완료', 'success');
+      showToast('새 폴더가 생성되었습니다.', 'success');
     } catch (error) {
       showToast(`폴더 생성 실패: ${error.message}`, 'error');
     }
@@ -38,7 +38,7 @@ export function createFileActions(api, reload, openNote) {
 
   async function deleteNote(event, file) {
     event?.stopPropagation();
-    if (!window.confirm(`"${file.name}"을 휴지통으로 이동할까?`)) return;
+    if (!window.confirm(`"${file.name}"을 휴지통으로 이동할까요?`)) return;
     try {
       await moveToTrash(api, file);
       if (appState.currentFile?.path === file.path) {
@@ -46,7 +46,7 @@ export function createFileActions(api, reload, openNote) {
         showEmptyState();
       }
       await reload();
-      showToast('휴지통으로 이동했어', 'success');
+      showToast('휴지통으로 이동되었습니다.', 'success');
     } catch (error) {
       showToast(`이동 실패: ${error.message}`, 'error');
     }
@@ -54,13 +54,18 @@ export function createFileActions(api, reload, openNote) {
 
   function renameFile(file) {
     startInlineRename(file.path, async (newName) => {
+      const cachedContent = appState.contentCache?.[file.path] ?? null;
       try {
-        const updated = await renameNote(api, file, newName);
+        const updated = await renameNote(api, file, newName, cachedContent);
+        if (cachedContent) {
+          appState.contentCache[updated.path] = cachedContent;
+          delete appState.contentCache[file.path];
+        }
         if (appState.currentFile?.path === file.path) {
           appState.currentFile = { ...appState.currentFile, path: updated.path };
         }
         await reload();
-        showToast('이름이 변경됐어', 'success');
+        showToast('이름이 변경되었습니다.', 'success');
       } catch (error) {
         showToast(`이름 변경 실패: ${error.message}`, 'error');
       }
@@ -71,14 +76,15 @@ export function createFileActions(api, reload, openNote) {
     const currentFolder = file.path.split('/').slice(0, -1).join('/');
     if (currentFolder === targetFolder) return;
     showToast('파일 이동 중...', 'info', 8000);
+    const cachedContent = appState.contentCache?.[file.path] ?? null;
     try {
-      await moveNote(api, file, targetFolder);
+      await moveNote(api, file, targetFolder, cachedContent);
       if (appState.currentFile?.path === file.path) {
         appState.currentFile = null;
         showEmptyState();
       }
       await reload();
-      showToast('파일이 이동됐어', 'success');
+      showToast('파일이 이동되었습니다.', 'success');
     } catch (error) {
       showToast(`이동 실패: ${error.message}`, 'error');
     }
@@ -99,7 +105,7 @@ export function createFileActions(api, reload, openNote) {
           showEmptyState();
         }
         await reload();
-        showToast('폴더 이름이 변경됐어', 'success');
+        showToast('폴더 이름이 변경되었습니다.', 'success');
       } catch (error) {
         showToast(`폴더 이름 변경 실패: ${error.message}`, 'error');
       }
@@ -110,7 +116,8 @@ export function createFileActions(api, reload, openNote) {
     for (const child of folderItem.children) {
       if (child.type === 'file') {
         const newPath = newBase + child.path.slice(oldBase.length);
-        await moveNoteToPath(api, child, newPath);
+        const cachedContent = appState.contentCache?.[child.path] ?? null;
+        await moveNoteToPath(api, child, newPath, cachedContent);
       } else if (child.type === 'dir') {
         await renameFolderRecursive(child, child.path, newBase + child.path.slice(oldBase.length));
       }

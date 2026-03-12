@@ -34,7 +34,7 @@ async function handleUnlock() {
   if (!password) return;
   if (await sha256(password) !== appState.config.pwHash) {
     clearPasswordInput();
-    setLockError('비밀번호가 틀렸어요');
+    setLockError('비밀번호가 올바르지 않습니다.');
     return;
   }
   setLockError('');
@@ -46,13 +46,13 @@ async function handleUnlock() {
 async function saveSetup() {
   const { newPassword } = readSetupForm();
   if (!newPassword) {
-    showToast('새 비밀번호를 입력해', 'error');
+    showToast('새 비밀번호를 입력해 주세요.', 'error');
     return;
   }
   appState.config.pwHash = await sha256(newPassword);
   saveMeta(appState.config);
   hideSetupScreen();
-  showToast('비밀번호가 변경됐어', 'success');
+  showToast('비밀번호가 변경되었습니다.', 'success');
 }
 
 async function showWorkspace() {
@@ -87,7 +87,7 @@ function bindGlobalActions() {
 }
 
 function resetApp() {
-  if (!window.confirm('모든 설정을 초기화할까? GitHub 메모 데이터는 삭제되지 않아.')) return;
+  if (!window.confirm('모든 설정을 초기화할까요? GitHub 메모 데이터는 삭제되지 않습니다.')) return;
   clearAll();
   window.location.reload();
 }

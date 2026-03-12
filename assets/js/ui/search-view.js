@@ -30,7 +30,7 @@ export function renderSearchResults(results, query) {
     return;
   }
   if (!results.length) {
-    container.appendChild(createNode('div', { className: 'search-empty', text: `"${query}" 결과가 없어` }));
+    container.appendChild(createNode('div', { className: 'search-empty', text: `"${query}" 검색 결과가 없습니다.` }));
     return;
   }
   results.forEach((result) => {

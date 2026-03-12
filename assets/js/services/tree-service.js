@@ -7,26 +7,30 @@ export async function fetchTree(api, path) {
     throw error;
   }
 
-  const result = [];
-  for (const item of items) {
-    if (item.type === 'dir') {
-      result.push({
-        type: 'dir',
-        name: item.name,
-        path: item.path,
-        children: await fetchTree(api, item.path),
-      });
-    }
-    if (item.name.endsWith('.md')) {
-      result.push({
-        type: 'file',
-        name: item.name.replace(/\.md$/, ''),
-        path: item.path,
-        sha: item.sha,
-      });
-    }
-  }
-  return result;
+  // 모든 항목을 병렬 처리 (순차 → 병렬로 성능 개선)
+  const result = await Promise.all(
+    items.map(async (item) => {
+      if (item.type === 'dir') {
+        return {
+          type: 'dir',
+          name: item.name,
+          path: item.path,
+          children: await fetchTree(api, item.path),
+        };
+      }
+      if (item.name.endsWith('.md')) {
+        return {
+          type: 'file',
+          name: item.name.replace(/\.md$/, ''),
+          path: item.path,
+          sha: item.sha,
+        };
+      }
+      return null;
+    })
+  );
+
+  return result.filter(Boolean);
 }
 
 export function flattenTree(tree, result = []) {

@@ -44,7 +44,7 @@ export function showTreeError(message, emptyNotes = false) {
   clear(tree);
   tree.appendChild(createNode('div', {
     className: 'tree-loading',
-    text: emptyNotes ? 'notes 폴더가 없어. 새 메모를 만들면 자동으로 생성돼!' : message,
+    text: emptyNotes ? 'notes 폴더가 없습니다. 새 메모를 만들면 자동으로 생성됩니다.' : message,
   }));
 }
 
