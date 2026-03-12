@@ -3,7 +3,7 @@ export async function fetchTree(api, path) {
   try {
     items = await api.listDirectory(path);
   } catch (error) {
-    if (error.message.includes('404')) return [];
+    if (error.message.includes('404') || error.message.includes('Not Found')) return [];
     throw error;
   }
 
