@@ -3,7 +3,7 @@ import { encodeBase64 } from '../utils/encoding.js';
 export function createGitHubApi() {
   async function request(path, options = {}) {
     const params = new URLSearchParams({ path });
-    const url = `/api/github?${params}`;
+    const url = `/.netlify/functions/github?${params}`;
     const response = await fetch(url, {
       method: options.method || 'GET',
       headers: { 'Content-Type': 'application/json' },
