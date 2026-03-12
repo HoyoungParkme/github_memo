@@ -1,3 +1,109 @@
+/* Note tab bar (multi-tab, above editor) */
+.note-tab-bar {
+  display: flex;
+  background: var(--bg-1);
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+  overflow-y: hidden;
+  flex-shrink: 0;
+  scrollbar-width: none;
+}
+
+.note-tab-bar::-webkit-scrollbar { display: none; }
+
+.note-tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 14px;
+  height: 36px;
+  border-right: 1px solid var(--border);
+  cursor: pointer;
+  user-select: none;
+  color: var(--text-muted);
+  font-size: 12px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: background 0.1s, color 0.1s;
+  max-width: 200px;
+}
+
+.note-tab:hover { background: var(--bg-2); color: var(--text-secondary); }
+
+.note-tab.active {
+  background: var(--bg-0);
+  color: var(--text-primary);
+  border-bottom: 2px solid var(--accent);
+}
+
+.note-tab-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+}
+
+.note-tab-close {
+  width: 16px;
+  height: 16px;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+  opacity: 0;
+  transition: background 0.1s, opacity 0.1s, color 0.1s;
+}
+
+.note-tab:hover .note-tab-close,
+.note-tab.active .note-tab-close { opacity: 1; }
+.note-tab-close:hover { background: var(--bg-3); color: var(--text-primary); }
+
+/* Markdown toolbar */
+.md-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  padding: 4px 12px;
+  background: var(--bg-1);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.md-toolbar::-webkit-scrollbar { display: none; }
+
+.md-btn {
+  padding: 3px 8px;
+  border-radius: var(--radius);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  transition: background 0.1s, color 0.1s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.md-btn:hover { background: var(--bg-3); color: var(--text-primary); }
+.md-btn:active { background: var(--accent-bg); color: var(--accent); }
+
+.md-btn-bold { font-weight: 800; font-family: var(--font-ui); }
+.md-btn-italic { font-style: italic; font-family: var(--font-ui); }
+.md-btn-strike { text-decoration: line-through; font-family: var(--font-ui); }
+
+.md-sep {
+  width: 1px;
+  height: 16px;
+  background: var(--border);
+  margin: 0 4px;
+  flex-shrink: 0;
+}
+
 /* Folder toggle arrow */
 .tree-arrow {
   display: inline-block;

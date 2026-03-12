@@ -23,7 +23,7 @@ export function bindModalControls({ onCreateFile, onCreateFolder }) {
 
 export function openFileModal(folders) {
   clear(byId('new-file-folder'));
-  byId('new-file-folder').appendChild(createOption('', '/ (루트)'));
+  byId('new-file-folder').appendChild(createOption('', '루트'));
   folders.forEach((folder) => {
     byId('new-file-folder').appendChild(createOption(folder.path, folder.path));
   });

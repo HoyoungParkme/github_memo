@@ -4,11 +4,12 @@ import { decodeBase64 } from './utils/encoding.js';
 import { showToast } from './ui/toast.js';
 import { renderPreview } from './ui/preview-view.js';
 import { updateToc } from './ui/toc-view.js';
-import { bindEditorControls, getEditorBody, openEditor, renderTags, setSaveState, switchTab } from './ui/editor-view.js';
+import { bindEditorControls, bindToolbar, getEditorBody, openEditor, renderNoteTabBar, renderTags, setSaveState, showEmptyState, switchTab } from './ui/editor-view.js';
 import { applyTagFilter, renderTagFilter, renderTree, setActiveTreeItem, showTreeError, showTreeLoading } from './ui/tree-view.js';
 import { bindSearchControls, closeSearch, openSearch, renderSearchResults } from './ui/search-view.js';
 import { bindModalControls, closeAllModals } from './ui/modal-view.js';
 import { buildNoteIndex, buildSnippet, createFuse } from './services/index-service.js';
+import { loadNoteCache, saveNoteCache } from './services/storage.js';
 import { fetchTree } from './services/tree-service.js';
 import { createFileActions } from './workspace-file-actions.js';
 import { getTrashItems, permanentDelete, restoreFromTrash, cleanExpiredItems, TRASH_EXPIRY_DAYS } from './services/trash-service.js';
@@ -17,9 +18,11 @@ import { showContextMenu } from './ui/context-menu.js';
 export function createWorkspace(api) {
   const fileActions = createFileActions(api, load, openNote);
   bindEditorControls({ onSave: saveCurrentNote, onInput: handleEditorInput, onRemoveTag: removeTag, onAddTag: addTag, onTabChange: changeTab });
+  bindToolbar(handleEditorInput);
   bindSearchControls({ onInput: searchNotes, onSelect: openFromSearch });
   bindModalControls({ onCreateFile: fileActions.createNewFile, onCreateFolder: fileActions.createNewFolder });
   setupTrashPanel();
+  setupSidebarToggles();
   cleanExpiredItems(api).catch(() => {});
   return { load, openSearch, closeTransientUi, confirmLeave, setOpeners };
 
@@ -59,23 +62,85 @@ export function createWorkspace(api) {
   }
 
   async function openNote(file) {
+    // 이미 탭에 열려 있으면 전환만
+    const existing = appState.openTabs.find((t) => t.path === file.path);
+    if (existing) {
+      if (!confirmLeave()) return;
+      saveCurrentTabState();
+      switchToTab(existing.path);
+      return;
+    }
+
     if (!confirmLeave()) return;
     try {
       const data = await api.getContent(file.path);
       const decodedContent = decodeBase64(data.content);
-      // 콘텐츠 캐시 저장 (이후 이름변경/이동 시 GET 생략)
       appState.contentCache[file.path] = decodedContent;
       const parsed = parseFrontmatter(decodedContent);
-      appState.currentFile = { path: file.path, sha: data.sha, frontmatter: parsed.frontmatter };
-      appState.currentTags = Array.isArray(parsed.frontmatter.tags) ? parsed.frontmatter.tags : [];
-      appState.isDirty = false;
-      setActiveTreeItem(file.path);
-      openEditor(file.path, appState.config.notesPath, parsed.body, appState.currentTags, appState.tab);
-      renderCurrent(parsed.body);
-      setSaveState('');
+      const newTab = {
+        path: file.path,
+        name: file.name || file.path.split('/').pop().replace(/\.md$/, ''),
+        sha: data.sha,
+        frontmatter: parsed.frontmatter,
+        body: parsed.body,
+        tags: Array.isArray(parsed.frontmatter.tags) ? parsed.frontmatter.tags : [],
+        isDirty: false,
+      };
+      saveCurrentTabState();
+      appState.openTabs.push(newTab);
+      switchToTab(file.path);
     } catch (error) {
       showToast(`불러오기 실패: ${error.message}`, 'error');
     }
+  }
+
+  function saveCurrentTabState() {
+    const tab = appState.openTabs.find((t) => t.path === appState.activeTabPath);
+    if (!tab) return;
+    tab.body = getEditorBody();
+    tab.tags = [...appState.currentTags];
+    tab.isDirty = appState.isDirty;
+  }
+
+  function switchToTab(path) {
+    const tab = appState.openTabs.find((t) => t.path === path);
+    if (!tab) return;
+    appState.activeTabPath = path;
+    appState.currentFile = { path: tab.path, sha: tab.sha, frontmatter: tab.frontmatter };
+    appState.currentTags = [...tab.tags];
+    appState.isDirty = tab.isDirty;
+    setActiveTreeItem(path);
+    openEditor(path, appState.config.notesPath, tab.body, tab.tags, appState.tab);
+    renderCurrent(tab.body);
+    setSaveState(tab.isDirty ? '저장되지 않은 변경사항' : '');
+    refreshTabBar();
+  }
+
+  function closeTab(path) {
+    const tab = appState.openTabs.find((t) => t.path === path);
+    if (tab?.isDirty) {
+      if (!window.confirm('저장하지 않은 변경 사항이 있습니다. 버리고 닫을까요?')) return;
+    }
+    const idx = appState.openTabs.findIndex((t) => t.path === path);
+    appState.openTabs.splice(idx, 1);
+
+    if (appState.activeTabPath === path) {
+      if (appState.openTabs.length > 0) {
+        switchToTab(appState.openTabs[Math.min(idx, appState.openTabs.length - 1)].path);
+      } else {
+        appState.activeTabPath = null;
+        appState.currentFile = null;
+        appState.isDirty = false;
+        showEmptyState();
+        refreshTabBar();
+      }
+    } else {
+      refreshTabBar();
+    }
+  }
+
+  function refreshTabBar() {
+    renderNoteTabBar(appState.openTabs, appState.activeTabPath, switchToTab, closeTab);
   }
 
   async function saveCurrentNote() {
@@ -86,12 +151,43 @@ export function createWorkspace(api) {
     setSaveState('저장 중...', true);
     try {
       const result = await api.putContent(appState.currentFile.path, content, `메모 업데이트: ${appState.currentFile.path}`, appState.currentFile.sha);
-      appState.currentFile = { ...appState.currentFile, sha: result.content.sha, frontmatter };
-      // 저장 후 캐시 갱신
+      const newSha = result.content.sha;
+      appState.currentFile = { ...appState.currentFile, sha: newSha, frontmatter };
       appState.contentCache[appState.currentFile.path] = content;
       appState.isDirty = false;
+
+      // 활성 탭 상태 갱신
+      const activeTab = appState.openTabs.find((t) => t.path === appState.currentFile.path);
+      if (activeTab) {
+        activeTab.sha = newSha;
+        activeTab.frontmatter = frontmatter;
+        activeTab.body = getEditorBody();
+        activeTab.tags = [...appState.currentTags];
+        activeTab.isDirty = false;
+      }
+
+      // 노트 인덱스 메모리 갱신 (API 호출 없음)
+      const body = getEditorBody();
+      const noteIdx = appState.notes.findIndex((n) => n.path === appState.currentFile.path);
+      if (noteIdx !== -1) {
+        const updated = {
+          ...appState.notes[noteIdx],
+          sha: newSha,
+          tags: appState.currentTags,
+          title: frontmatter.title || appState.notes[noteIdx].title,
+          body,
+          searchBody: body.replace(/\s+/g, ' ').trim(),
+        };
+        appState.notes[noteIdx] = updated;
+        const cache = loadNoteCache(appState.config);
+        cache[appState.currentFile.path] = updated;
+        saveNoteCache(appState.config, cache);
+      }
+      appState.fuse = createFuse(appState.notes);
+      syncTagFilter();
+
       setSaveState(`${new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })} 저장됨`);
-      await load();
+      refreshTabBar();
       showToast('저장되었습니다', 'success');
     } catch (error) {
       setSaveState('저장 실패');
@@ -104,6 +200,11 @@ export function createWorkspace(api) {
 
   function handleEditorInput() {
     appState.isDirty = true;
+    const activeTab = appState.openTabs.find((t) => t.path === appState.activeTabPath);
+    if (activeTab && !activeTab.isDirty) {
+      activeTab.isDirty = true;
+      refreshTabBar();
+    }
     renderCurrent();
   }
 
@@ -163,6 +264,20 @@ export function createWorkspace(api) {
   function renderCurrent(body = getEditorBody()) {
     renderPreview(body, appState.currentTags);
     updateToc(body, appState.tab);
+  }
+
+  function setupSidebarToggles() {
+    const app = document.getElementById('app');
+    const sidebarBtn = document.getElementById('toggle-sidebar-btn');
+    const tocBtn = document.getElementById('toggle-toc-btn');
+    if (sidebarBtn) sidebarBtn.addEventListener('click', () => {
+      app.classList.toggle('sidebar-hidden');
+      sidebarBtn.title = app.classList.contains('sidebar-hidden') ? '사이드바 열기' : '사이드바 닫기';
+    });
+    if (tocBtn) tocBtn.addEventListener('click', () => {
+      app.classList.toggle('toc-hidden');
+      tocBtn.title = app.classList.contains('toc-hidden') ? '목차 열기' : '목차 닫기';
+    });
   }
 
   function setupTrashPanel() {
