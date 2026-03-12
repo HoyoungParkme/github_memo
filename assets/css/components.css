@@ -153,6 +153,15 @@
 .context-menu-item:hover { background: var(--bg-3); color: var(--text-primary); }
 .context-menu-item.danger { color: #e05555; }
 .context-menu-item.danger:hover { background: rgba(224,85,85,0.1); }
+.context-menu-sep { height: 1px; background: var(--border); margin: 4px 0; }
+.context-menu-color-label { padding: 4px 12px 2px; font-size: 11px; color: var(--text-muted); }
+.context-menu-colors { display: flex; gap: 6px; padding: 4px 10px 8px; flex-wrap: wrap; }
+.context-menu-color-dot {
+  width: 20px; height: 20px; border-radius: 50%; border: 2px solid transparent;
+  cursor: pointer; flex-shrink: 0; font-size: 9px; display: flex; align-items: center; justify-content: center;
+}
+.context-menu-color-dot:hover { border-color: var(--text-primary); }
+.context-menu-color-dot.reset { background: var(--bg-3) !important; color: var(--text-muted); border: 1px solid var(--border); }
 
 /* Trash panel */
 .trash-overlay {

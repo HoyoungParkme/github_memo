@@ -29,11 +29,14 @@ export async function renameNote(api, file, newName) {
 }
 
 export async function moveNote(api, file, targetFolder) {
+  const filename = file.path.split('/').pop();
+  return moveNoteToPath(api, file, `${targetFolder}/${filename}`);
+}
+
+export async function moveNoteToPath(api, file, newPath) {
+  if (newPath === file.path) return null;
   const data = await api.getContent(file.path);
   const content = decodeBase64(data.content);
-  const filename = file.path.split('/').pop();
-  const newPath = `${targetFolder}/${filename}`;
-  if (newPath === file.path) return null;
   await api.putContent(newPath, content, `이동: ${file.path} → ${newPath}`);
   await api.deleteContent(file.path, `이동: ${file.path}`, data.sha);
   return { path: newPath, name: file.name };

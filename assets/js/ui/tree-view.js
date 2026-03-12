@@ -2,6 +2,37 @@ import { byId, clear, createNode } from '../utils/dom.js';
 import { showContextMenu } from './context-menu.js';
 
 const collapsedFolders = new Set();
+const FOLDER_COLORS_KEY = 'devmemo_folder_colors';
+
+function getFolderColors() {
+  try { return JSON.parse(localStorage.getItem(FOLDER_COLORS_KEY) || '{}'); } catch { return {}; }
+}
+
+function setFolderColor(path, color) {
+  const colors = getFolderColors();
+  if (color) colors[path] = color;
+  else delete colors[path];
+  localStorage.setItem(FOLDER_COLORS_KEY, JSON.stringify(colors));
+  // 즉시 DOM 반영
+  const row = document.querySelector(`.tree-item[data-path="${CSS.escape(path)}"]`);
+  if (row) {
+    const icon = row.querySelector('.tree-icon');
+    const label = row.querySelector('.tree-label');
+    if (icon) icon.style.color = color || '';
+    if (label) label.style.color = color || '';
+  }
+}
+
+const FOLDER_COLOR_OPTIONS = [
+  { color: '', title: '기본' },
+  { color: '#e05555', title: '빨강' },
+  { color: '#e07d35', title: '주황' },
+  { color: '#d4a017', title: '노랑' },
+  { color: '#4caf50', title: '초록' },
+  { color: '#4a9eff', title: '파랑' },
+  { color: '#9c6ade', title: '보라' },
+  { color: '#e05599', title: '핑크' },
+];
 
 export function showTreeLoading() {
   const tree = byId('file-tree');
@@ -20,6 +51,7 @@ export function showTreeError(message, emptyNotes = false) {
 
 export function renderTree(tree, handlers, depth = 0, container = byId('file-tree')) {
   if (depth === 0) clear(container);
+  const colors = getFolderColors();
 
   tree.forEach((item) => {
     const row = createNode('div', {
@@ -30,19 +62,36 @@ export function renderTree(tree, handlers, depth = 0, container = byId('file-tre
     if (item.type === 'dir') {
       const isCollapsed = collapsedFolders.has(item.path);
       const arrow = createNode('span', { className: `tree-arrow${isCollapsed ? '' : ' open'}`, text: '▶' });
+      const icon = createNode('span', { className: 'tree-icon', text: '📁' });
+      const label = createNode('span', { className: 'tree-label', text: item.name });
+
+      const folderColor = colors[item.path];
+      if (folderColor) {
+        icon.style.color = folderColor;
+        label.style.color = folderColor;
+      }
+
       row.appendChild(arrow);
-      row.appendChild(createNode('span', { className: 'tree-icon', text: '📁' }));
-      row.appendChild(createNode('span', { className: 'tree-label', text: item.name }));
+      row.appendChild(icon);
+      row.appendChild(label);
 
       row.addEventListener('click', () => toggleFolder(item.path, arrow));
       row.addEventListener('contextmenu', (e) => {
         e.preventDefault();
+        e.stopPropagation();
         showContextMenu(e.clientX, e.clientY, [
           { label: '이름 바꾸기', action: () => handlers.onRenameFolder?.(item) },
+          { type: 'separator' },
+          {
+            type: 'colors',
+            label: '폴더 색상',
+            colors: FOLDER_COLOR_OPTIONS,
+            onSelect: (color) => setFolderColor(item.path, color),
+          },
         ]);
       });
 
-      // Drop target for drag-and-drop
+      // 드래그 드롭 타겟
       row.addEventListener('dragover', (e) => { e.preventDefault(); row.classList.add('drag-over'); });
       row.addEventListener('dragleave', () => row.classList.remove('drag-over'));
       row.addEventListener('drop', (e) => {
@@ -62,7 +111,7 @@ export function renderTree(tree, handlers, depth = 0, container = byId('file-tre
       return;
     }
 
-    // File item — draggable
+    // 파일 — 드래그 가능
     row.draggable = true;
     row.addEventListener('dragstart', (e) => {
       e.dataTransfer.effectAllowed = 'move';
@@ -81,6 +130,7 @@ export function renderTree(tree, handlers, depth = 0, container = byId('file-tre
     row.addEventListener('click', () => handlers.onOpen(item));
     row.addEventListener('contextmenu', (e) => {
       e.preventDefault();
+      e.stopPropagation();
       showContextMenu(e.clientX, e.clientY, [
         { label: '이름 바꾸기', action: () => handlers.onRename?.(item) },
         { label: '휴지통으로 이동', action: () => handlers.onDelete(null, item), danger: true },
@@ -120,7 +170,6 @@ export function applyTagFilter(activeTag, notes) {
   });
 
   if (!activeTag) {
-    // Show all folders (including empty ones) when no tag filter
     document.querySelectorAll('[data-folder]').forEach((folder) => {
       if (!collapsedFolders.has(folder.dataset.folder)) folder.style.display = '';
     });

@@ -37,6 +37,7 @@ export function createWorkspace(api) {
         onOpen: openNote,
         onDelete: fileActions.deleteNote,
         onRename: fileActions.renameFile,
+        onRenameFolder: fileActions.renameFolder,
         onMove: fileActions.moveFile,
       });
       appState.notes = await buildNoteIndex(appState.tree, api, appState.config);
