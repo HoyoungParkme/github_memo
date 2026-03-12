@@ -51,6 +51,7 @@ export function createWorkspace(api) {
       renderTree(appState.tree, {
         onOpen: openNote,
         onDelete: fileActions.deleteNote,
+        onDeleteFolder: fileActions.deleteFolder,
         onRename: fileActions.renameFile,
         onRenameFolder: fileActions.renameFolder,
         onMove: fileActions.moveFile,
@@ -272,23 +273,24 @@ export function createWorkspace(api) {
     // 에디터 영역 전체를 드롭 타깃으로 - 사이드바에서 드래그해서 탭으로 열기
     const editorArea = document.querySelector('.editor-area');
     if (!editorArea) return;
-    editorArea.addEventListener('dragover', (e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'link'; });
+    editorArea.addEventListener('dragover', (e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; });
     editorArea.addEventListener('drop', (e) => {
+      // 폴더 드롭(이동) 이벤트와 구분: 파일 경로만 있고 타입이 file인 것만 처리
       e.preventDefault();
       try {
         const file = JSON.parse(e.dataTransfer.getData('text/plain'));
-        if (file.path) openNote(file);
+        if (file.path && file.path.endsWith('.md')) openNote(file);
       } catch { /* ignore */ }
     });
     // 탭바 자체도 드롭 타깃
     const tabBar = document.getElementById('note-tab-bar');
     if (tabBar) {
-      tabBar.addEventListener('dragover', (e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'link'; });
+      tabBar.addEventListener('dragover', (e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; });
       tabBar.addEventListener('drop', (e) => {
         e.preventDefault();
         try {
           const file = JSON.parse(e.dataTransfer.getData('text/plain'));
-          if (file.path) openNote(file);
+          if (file.path && file.path.endsWith('.md')) openNote(file);
         } catch { /* ignore */ }
       });
     }

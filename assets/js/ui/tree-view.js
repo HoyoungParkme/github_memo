@@ -80,6 +80,7 @@ export function renderTree(tree, handlers, depth = 0, container = byId('file-tre
         e.stopPropagation();
         showContextMenu(e.clientX, e.clientY, [
           { label: '이름 바꾸기', action: () => handlers.onRenameFolder?.(item) },
+          { label: '휴지통으로 이동', action: () => handlers.onDeleteFolder?.(item), danger: true },
           { type: 'separator' },
           {
             type: 'colors',

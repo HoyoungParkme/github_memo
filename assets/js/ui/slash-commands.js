@@ -18,14 +18,26 @@ let popup = null;
 let activeIdx = 0;
 let slashPos = -1;
 let filteredCommands = [];
+let boundTa = null;
 let onInputCallback = null;
 
 export function bindSlashCommands(ta, onInput) {
   onInputCallback = onInput;
+  boundTa = ta;
   ta.addEventListener('input', () => handleInput(ta));
-  ta.addEventListener('keydown', (e) => handleKeydown(e, ta));
   ta.addEventListener('click', hidePopup);
   ta.addEventListener('blur', () => setTimeout(hidePopup, 150));
+  // document 캡처 단계 keydown으로 Enter/방향키를 textarea 기본동작보다 먼저 처리
+  document.addEventListener('keydown', handleDocKeydown, { capture: true });
+}
+
+function handleDocKeydown(e) {
+  // 슬래시 팝업이 없거나 포커스가 에디터가 아닌 경우 무시
+  if (!popup || !boundTa || document.activeElement !== boundTa) return;
+  if (e.key === 'ArrowDown') { e.preventDefault(); e.stopPropagation(); moveSelection(1); }
+  else if (e.key === 'ArrowUp') { e.preventDefault(); e.stopPropagation(); moveSelection(-1); }
+  else if (e.key === 'Enter' || e.key === 'Tab') { e.preventDefault(); e.stopPropagation(); selectActive(boundTa); }
+  else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); hidePopup(); }
 }
 
 function handleInput(ta) {
@@ -51,16 +63,9 @@ function handleInput(ta) {
   hidePopup();
 }
 
-function handleKeydown(e, ta) {
-  if (!popup) return;
-  if (e.key === 'ArrowDown') { e.preventDefault(); moveSelection(1); }
-  else if (e.key === 'ArrowUp') { e.preventDefault(); moveSelection(-1); }
-  else if (e.key === 'Enter' || e.key === 'Tab') { e.preventDefault(); selectActive(ta); }
-  else if (e.key === 'Escape') { e.preventDefault(); hidePopup(); }
-}
-
 function moveSelection(delta) {
-  const items = popup.querySelectorAll('.slash-item');
+  const items = popup?.querySelectorAll('.slash-item');
+  if (!items) return;
   items[activeIdx]?.classList.remove('active');
   activeIdx = (activeIdx + delta + items.length) % items.length;
   items[activeIdx]?.classList.add('active');
@@ -72,15 +77,14 @@ function selectActive(ta) {
   if (id) applyCommand(ta, id);
 }
 
-export function applySlashCommand(ta, id) {
-  applyCommand(ta, id);
-}
-
 function applyCommand(ta, id) {
+  if (slashPos === -1) return;
+  const savedSlashPos = slashPos;
   hidePopup();
+
   const pos = ta.selectionStart;
   const text = ta.value;
-  const lineStart = text.lastIndexOf('\n', slashPos - 1) + 1;
+  const lineStart = text.lastIndexOf('\n', savedSlashPos - 1) + 1;
   const before = text.slice(0, lineStart);
   const after = text.slice(pos);
 

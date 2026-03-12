@@ -7,7 +7,7 @@ import { showToast } from './ui/toast.js';
 import { startInlineRename } from './ui/tree-view.js';
 
 export function createFileActions(api, reload, openNote) {
-  return { createNewFile, createNewFolder, deleteNote, renameFile, moveFile, renameFolder };
+  return { createNewFile, createNewFolder, deleteNote, deleteFolder, renameFile, moveFile, renameFolder };
 
   async function createNewFile() {
     const { name, folder } = readFileForm();
@@ -110,6 +110,39 @@ export function createFileActions(api, reload, openNote) {
         showToast(`폴더 이름 변경 실패: ${error.message}`, 'error');
       }
     });
+  }
+
+  async function deleteFolder(folder) {
+    if (!window.confirm(`"${folder.name}" 폴더 전체를 휴지통으로 이동할까요?\n폴더 안의 모든 파일이 이동됩니다.`)) return;
+    showToast('폴더 삭제 중...', 'info', 15000);
+    try {
+      await deleteFolderRecursive(folder);
+      if (appState.currentFile?.path.startsWith(folder.path + '/')) {
+        appState.currentFile = null;
+        showEmptyState();
+      }
+      await reload();
+      showToast('폴더가 삭제되었습니다.', 'success');
+    } catch (error) {
+      showToast(`삭제 실패: ${error.message}`, 'error');
+    }
+  }
+
+  async function deleteFolderRecursive(folderItem) {
+    for (const child of folderItem.children) {
+      if (child.type === 'file') {
+        await moveToTrash(api, child);
+      } else if (child.type === 'dir') {
+        await deleteFolderRecursive(child);
+      }
+    }
+    // 빈 폴더의 .gitkeep 삭제
+    if (folderItem.children.length === 0) {
+      try {
+        const data = await api.getContent(`${folderItem.path}/.gitkeep`);
+        await api.deleteContent(`${folderItem.path}/.gitkeep`, `폴더 삭제: ${folderItem.path}`, data.sha);
+      } catch { /* .gitkeep 없으면 무시 */ }
+    }
   }
 
   async function renameFolderRecursive(folderItem, oldBase, newBase) {
