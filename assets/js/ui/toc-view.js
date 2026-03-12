@@ -1,5 +1,11 @@
 import { byId, clear, createNode } from '../utils/dom.js';
 
+export function clearToc() {
+  const toc = byId('toc-list');
+  clear(toc);
+  toc.appendChild(createNode('div', { className: 'toc-empty', text: '메모를 열면 목차가 표시됩니다' }));
+}
+
 export function updateToc(markdown, tab) {
   const toc = byId('toc-list');
   const headings = markdown.split('\n')

@@ -44,7 +44,7 @@ export function showTreeError(message, emptyNotes = false) {
   clear(tree);
   tree.appendChild(createNode('div', {
     className: 'tree-loading',
-    text: emptyNotes ? 'notes 폴더가 없습니다. 새 메모를 만들면 자동으로 생성됩니다.' : message,
+    text: emptyNotes ? 'note 폴더가 없습니다. 새 메모를 만들면 자동으로 생성됩니다.' : message,
   }));
 }
 
@@ -91,7 +91,7 @@ export function renderTree(tree, handlers, depth = 0, container = byId('file-tre
         ]);
       });
 
-      row.addEventListener('dragover', (e) => { e.preventDefault(); row.classList.add('drag-over'); });
+      row.addEventListener('dragover', (e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; row.classList.add('drag-over'); });
       row.addEventListener('dragleave', () => row.classList.remove('drag-over'));
       row.addEventListener('drop', (e) => {
         e.preventDefault();
@@ -113,7 +113,7 @@ export function renderTree(tree, handlers, depth = 0, container = byId('file-tre
     // 파일
     row.draggable = true;
     row.addEventListener('dragstart', (e) => {
-      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.effectAllowed = 'copyMove';
       e.dataTransfer.setData('text/plain', JSON.stringify({ path: item.path, name: item.name, sha: item.sha }));
       row.classList.add('dragging');
     });

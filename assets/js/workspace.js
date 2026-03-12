@@ -3,7 +3,7 @@ import { buildFrontmatter, parseFrontmatter } from './utils/frontmatter.js';
 import { decodeBase64 } from './utils/encoding.js';
 import { showToast } from './ui/toast.js';
 import { renderPreview } from './ui/preview-view.js';
-import { updateToc } from './ui/toc-view.js';
+import { clearToc, updateToc } from './ui/toc-view.js';
 import { bindEditorControls, bindSlashCommandsToEditor, bindToolbar, getEditorBody, openEditor, renderNoteTabBar, renderTags, setSaveState, showEmptyState, switchTab } from './ui/editor-view.js';
 import { applyTagFilter, renderTagFilter, renderTree, setActiveTreeItem, showTreeError, showTreeLoading } from './ui/tree-view.js';
 import { bindSearchControls, closeSearch, openSearch, renderSearchResults } from './ui/search-view.js';
@@ -16,6 +16,7 @@ import { getTrashItems, permanentDelete, restoreFromTrash, cleanExpiredItems, TR
 import { showContextMenu } from './ui/context-menu.js';
 
 export function createWorkspace(api) {
+  const loadingPaths = new Set();
   const fileActions = createFileActions(api, load, openNote);
   bindEditorControls({ onSave: saveCurrentNote, onInput: handleEditorInput, onRemoveTag: removeTag, onAddTag: addTag, onTabChange: changeTab });
   bindToolbar(handleEditorInput);
@@ -74,7 +75,11 @@ export function createWorkspace(api) {
       return;
     }
 
+    // 이미 로딩 중이면 중복 방지
+    if (loadingPaths.has(file.path)) return;
+
     if (!confirmLeave()) return;
+    loadingPaths.add(file.path);
     try {
       const data = await api.getContent(file.path);
       const decodedContent = decodeBase64(data.content);
@@ -82,7 +87,7 @@ export function createWorkspace(api) {
       const parsed = parseFrontmatter(decodedContent);
       const newTab = {
         path: file.path,
-        name: file.name || file.path.split('/').pop().replace(/\.md$/, ''),
+        name: file.name || file.path.split('/').pop().replace(/\.md$/, '').replace(/-/g, ' '),
         sha: data.sha,
         frontmatter: parsed.frontmatter,
         body: parsed.body,
@@ -94,6 +99,8 @@ export function createWorkspace(api) {
       switchToTab(file.path);
     } catch (error) {
       showToast(`불러오기 실패: ${error.message}`, 'error');
+    } finally {
+      loadingPaths.delete(file.path);
     }
   }
 
@@ -135,6 +142,7 @@ export function createWorkspace(api) {
         appState.currentFile = null;
         appState.isDirty = false;
         showEmptyState();
+        clearToc();
         refreshTabBar();
       }
     } else {
@@ -265,6 +273,10 @@ export function createWorkspace(api) {
   }
 
   function renderCurrent(body = getEditorBody()) {
+    if (!appState.currentFile) {
+      clearToc();
+      return;
+    }
     renderPreview(body, appState.currentTags);
     updateToc(body, appState.tab);
   }
@@ -273,7 +285,7 @@ export function createWorkspace(api) {
     // 에디터 영역 전체를 드롭 타깃으로 - 사이드바에서 드래그해서 탭으로 열기
     const editorArea = document.querySelector('.editor-area');
     if (!editorArea) return;
-    editorArea.addEventListener('dragover', (e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; });
+    editorArea.addEventListener('dragover', (e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; });
     editorArea.addEventListener('drop', (e) => {
       // 폴더 드롭(이동) 이벤트와 구분: 파일 경로만 있고 타입이 file인 것만 처리
       e.preventDefault();
@@ -285,7 +297,7 @@ export function createWorkspace(api) {
     // 탭바 자체도 드롭 타깃
     const tabBar = document.getElementById('note-tab-bar');
     if (tabBar) {
-      tabBar.addEventListener('dragover', (e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; });
+      tabBar.addEventListener('dragover', (e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; });
       tabBar.addEventListener('drop', (e) => {
         e.preventDefault();
         try {

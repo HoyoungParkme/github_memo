@@ -21,7 +21,7 @@ export async function fetchTree(api, path) {
       if (item.name.endsWith('.md')) {
         return {
           type: 'file',
-          name: item.name.replace(/\.md$/, ''),
+          name: item.name.replace(/\.md$/, '').replace(/-/g, ' '),
           path: item.path,
           sha: item.sha,
         };

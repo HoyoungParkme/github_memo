@@ -1,5 +1,5 @@
 export const defaultConfig = Object.freeze({
-  notesPath: 'notes',
+  notesPath: 'note',
   pwHash: '',
 });
 

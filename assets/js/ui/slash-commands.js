@@ -27,17 +27,13 @@ export function bindSlashCommands(ta, onInput) {
   ta.addEventListener('input', () => handleInput(ta));
   ta.addEventListener('click', hidePopup);
   ta.addEventListener('blur', () => setTimeout(hidePopup, 150));
-  // document 캡처 단계 keydown으로 Enter/방향키를 textarea 기본동작보다 먼저 처리
-  document.addEventListener('keydown', handleDocKeydown, { capture: true });
-}
-
-function handleDocKeydown(e) {
-  // 슬래시 팝업이 없거나 포커스가 에디터가 아닌 경우 무시
-  if (!popup || !boundTa || document.activeElement !== boundTa) return;
-  if (e.key === 'ArrowDown') { e.preventDefault(); e.stopPropagation(); moveSelection(1); }
-  else if (e.key === 'ArrowUp') { e.preventDefault(); e.stopPropagation(); moveSelection(-1); }
-  else if (e.key === 'Enter' || e.key === 'Tab') { e.preventDefault(); e.stopPropagation(); selectActive(boundTa); }
-  else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); hidePopup(); }
+  ta.addEventListener('keydown', (e) => {
+    if (!popup) return;
+    if (e.key === 'ArrowDown') { e.preventDefault(); e.stopPropagation(); moveSelection(1); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); e.stopPropagation(); moveSelection(-1); }
+    else if (e.key === 'Enter' || e.key === 'Tab') { e.preventDefault(); e.stopPropagation(); selectActive(ta); }
+    else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); hidePopup(); }
+  });
 }
 
 function handleInput(ta) {
