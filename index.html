@@ -53,7 +53,14 @@
       <aside class="sidebar">
         <div class="sidebar-section"><span>파일</span><div class="sidebar-actions"><button class="sidebar-action-btn" id="new-folder-btn" title="새 폴더">📁</button><button class="sidebar-action-btn" id="new-note-btn" title="새 메모">📄</button><button class="sidebar-action-btn" id="trash-btn" title="휴지통">🗑</button></div></div>
         <div class="file-tree" id="file-tree"></div>
-        <div class="sidebar-section sidebar-section-bottom">태그</div>
+        <div class="sidebar-note-tags" id="sidebar-note-tags" style="display:none">
+          <div class="sidebar-note-tags-header">현재 메모 태그</div>
+          <div class="note-tags-content">
+            <div class="meta-tags" id="meta-tags"></div>
+            <input class="meta-tag-input" id="tag-input" placeholder="+ 태그 추가" maxlength="20">
+          </div>
+        </div>
+        <div class="sidebar-section sidebar-section-bottom">태그 필터</div>
         <div class="tag-filter" id="tag-filter"></div>
         <button class="sidebar-new-btn" id="new-note-footer-btn">+ 새 메모</button>
       </aside>
@@ -95,11 +102,6 @@
               <textarea class="code-editor" id="code-editor" spellcheck="false"></textarea>
             </div>
             <div class="preview-area" id="preview-area"></div>
-          </div>
-          <div class="meta-bar">
-            <span class="meta-label">태그:</span>
-            <div class="meta-tags" id="meta-tags"></div>
-            <input class="meta-tag-input" id="tag-input" placeholder="태그 입력 후 Enter" maxlength="20">
           </div>
         </div>
       </main>

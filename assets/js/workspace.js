@@ -4,7 +4,7 @@ import { decodeBase64 } from './utils/encoding.js';
 import { showToast } from './ui/toast.js';
 import { renderPreview } from './ui/preview-view.js';
 import { updateToc } from './ui/toc-view.js';
-import { bindEditorControls, bindToolbar, getEditorBody, openEditor, renderNoteTabBar, renderTags, setSaveState, showEmptyState, switchTab } from './ui/editor-view.js';
+import { bindEditorControls, bindSlashCommandsToEditor, bindToolbar, getEditorBody, openEditor, renderNoteTabBar, renderTags, setSaveState, showEmptyState, switchTab } from './ui/editor-view.js';
 import { applyTagFilter, renderTagFilter, renderTree, setActiveTreeItem, showTreeError, showTreeLoading } from './ui/tree-view.js';
 import { bindSearchControls, closeSearch, openSearch, renderSearchResults } from './ui/search-view.js';
 import { bindModalControls, closeAllModals } from './ui/modal-view.js';
@@ -19,10 +19,12 @@ export function createWorkspace(api) {
   const fileActions = createFileActions(api, load, openNote);
   bindEditorControls({ onSave: saveCurrentNote, onInput: handleEditorInput, onRemoveTag: removeTag, onAddTag: addTag, onTabChange: changeTab });
   bindToolbar(handleEditorInput);
+  bindSlashCommandsToEditor(handleEditorInput);
   bindSearchControls({ onInput: searchNotes, onSelect: openFromSearch });
   bindModalControls({ onCreateFile: fileActions.createNewFile, onCreateFolder: fileActions.createNewFolder });
   setupTrashPanel();
   setupSidebarToggles();
+  setupTabDrop();
   cleanExpiredItems(api).catch(() => {});
   return { load, openSearch, closeTransientUi, confirmLeave, setOpeners };
 
@@ -264,6 +266,32 @@ export function createWorkspace(api) {
   function renderCurrent(body = getEditorBody()) {
     renderPreview(body, appState.currentTags);
     updateToc(body, appState.tab);
+  }
+
+  function setupTabDrop() {
+    // 에디터 영역 전체를 드롭 타깃으로 - 사이드바에서 드래그해서 탭으로 열기
+    const editorArea = document.querySelector('.editor-area');
+    if (!editorArea) return;
+    editorArea.addEventListener('dragover', (e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'link'; });
+    editorArea.addEventListener('drop', (e) => {
+      e.preventDefault();
+      try {
+        const file = JSON.parse(e.dataTransfer.getData('text/plain'));
+        if (file.path) openNote(file);
+      } catch { /* ignore */ }
+    });
+    // 탭바 자체도 드롭 타깃
+    const tabBar = document.getElementById('note-tab-bar');
+    if (tabBar) {
+      tabBar.addEventListener('dragover', (e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'link'; });
+      tabBar.addEventListener('drop', (e) => {
+        e.preventDefault();
+        try {
+          const file = JSON.parse(e.dataTransfer.getData('text/plain'));
+          if (file.path) openNote(file);
+        } catch { /* ignore */ }
+      });
+    }
   }
 
   function setupSidebarToggles() {

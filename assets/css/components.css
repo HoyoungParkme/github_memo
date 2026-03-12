@@ -1,3 +1,59 @@
+/* Slash command popup */
+.slash-popup {
+  position: fixed;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 4px;
+  min-width: 200px;
+  max-height: 260px;
+  overflow-y: auto;
+  box-shadow: var(--shadow-lg);
+  z-index: 8000;
+  animation: menu-in 0.1s ease;
+  scrollbar-width: thin;
+}
+
+.slash-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 10px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.slash-item:hover,
+.slash-item.active {
+  background: var(--accent-bg);
+}
+
+.slash-item-icon {
+  width: 30px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-3);
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  flex-shrink: 0;
+}
+
+.slash-item.active .slash-item-icon {
+  background: var(--accent);
+  color: #fff;
+}
+
+.slash-item-label {
+  font-size: 13px;
+  color: var(--text-primary);
+}
+
 /* Note tab bar (multi-tab, above editor) */
 .note-tab-bar {
   display: flex;

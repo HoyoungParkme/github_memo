@@ -1,4 +1,5 @@
 import { byId, clear, createNode, hide, show } from '../utils/dom.js';
+import { bindSlashCommands } from './slash-commands.js';
 
 export function bindEditorControls({ onSave, onInput, onRemoveTag, onAddTag, onTabChange }) {
   byId('save-btn').addEventListener('click', onSave);
@@ -24,10 +25,15 @@ export function bindToolbar(onInput) {
   toolbar.addEventListener('mousedown', (e) => {
     const btn = e.target.closest('[data-action]');
     if (!btn) return;
-    e.preventDefault(); // textarea 포커스 유지
+    e.preventDefault();
     applyFormat(btn.dataset.action);
     onInput();
   });
+}
+
+export function bindSlashCommandsToEditor(onInput) {
+  const ta = byId('code-editor');
+  if (ta) bindSlashCommands(ta, onInput);
 }
 
 export function renderNoteTabBar(tabs, activeTabPath, onSwitch, onClose) {
@@ -54,6 +60,7 @@ export function renderNoteTabBar(tabs, activeTabPath, onSwitch, onClose) {
 export function openEditor(path, notesPath, body, tags, tab) {
   hide(byId('empty-state'));
   show(byId('editor-container'), 'flex');
+  showSidebarNoteTags();
   byId('code-editor').value = body;
   renderTags(tags);
   byId('breadcrumb').textContent = path.replace(`${notesPath}/`, '');
@@ -63,6 +70,17 @@ export function openEditor(path, notesPath, body, tags, tab) {
 export function showEmptyState() {
   hide(byId('editor-container'));
   show(byId('empty-state'), 'flex');
+  hideSidebarNoteTags();
+}
+
+function showSidebarNoteTags() {
+  const el = byId('sidebar-note-tags');
+  if (el) el.style.display = '';
+}
+
+function hideSidebarNoteTags() {
+  const el = byId('sidebar-note-tags');
+  if (el) el.style.display = 'none';
 }
 
 export function getEditorBody() {

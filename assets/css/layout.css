@@ -218,6 +218,30 @@
   padding: 6px 10px;
 }
 
+/* 현재 메모 태그 (사이드바 하단) */
+.sidebar-note-tags {
+  border-top: 1px solid var(--border);
+  padding: 8px 10px 10px;
+  flex-shrink: 0;
+}
+
+.sidebar-note-tags-header {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 6px;
+  padding: 0 4px;
+}
+
+.note-tags-content {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+}
+
 .sidebar-new-btn {
   margin: 8px 10px;
   padding: 8px 0;
