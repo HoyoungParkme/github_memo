@@ -2,7 +2,7 @@ const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 const GITHUB_OWNER = process.env.GITHUB_OWNER;
 const GITHUB_REPO = process.env.GITHUB_REPO;
 
-export async function handler(event) {
+exports.handler = async function (event) {
   if (!GITHUB_TOKEN || !GITHUB_OWNER || !GITHUB_REPO) {
     return {
       statusCode: 500,
@@ -34,4 +34,4 @@ export async function handler(event) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
   };
-}
+};
