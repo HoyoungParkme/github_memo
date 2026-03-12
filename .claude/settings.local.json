@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git pull:*)"
+    ],
+    "additionalDirectories": [
+      "C:\\Users\\edgar\\.claude\\projects\\d--dev-personal-github-memo"
+    ]
+  }
+}

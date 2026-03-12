@@ -13,12 +13,11 @@ function setFolderColor(path, color) {
   if (color) colors[path] = color;
   else delete colors[path];
   localStorage.setItem(FOLDER_COLORS_KEY, JSON.stringify(colors));
-  // 즉시 DOM 반영
   const row = document.querySelector(`.tree-item[data-path="${CSS.escape(path)}"]`);
   if (row) {
-    const icon = row.querySelector('.tree-icon');
+    const dot = row.querySelector('.tree-folder-dot');
     const label = row.querySelector('.tree-label');
-    if (icon) icon.style.color = color || '';
+    if (dot) dot.style.color = color || '';
     if (label) label.style.color = color || '';
   }
 }
@@ -29,8 +28,8 @@ const FOLDER_COLOR_OPTIONS = [
   { color: '#e07d35', title: '주황' },
   { color: '#d4a017', title: '노랑' },
   { color: '#4caf50', title: '초록' },
+  { color: '#7c6af7', title: '보라' },
   { color: '#4a9eff', title: '파랑' },
-  { color: '#9c6ade', title: '보라' },
   { color: '#e05599', title: '핑크' },
 ];
 
@@ -62,17 +61,17 @@ export function renderTree(tree, handlers, depth = 0, container = byId('file-tre
     if (item.type === 'dir') {
       const isCollapsed = collapsedFolders.has(item.path);
       const arrow = createNode('span', { className: `tree-arrow${isCollapsed ? '' : ' open'}`, text: '▶' });
-      const icon = createNode('span', { className: 'tree-icon', text: '📁' });
+      const dot = createNode('span', { className: 'tree-folder-dot', text: '■' });
       const label = createNode('span', { className: 'tree-label', text: item.name });
 
       const folderColor = colors[item.path];
       if (folderColor) {
-        icon.style.color = folderColor;
+        dot.style.color = folderColor;
         label.style.color = folderColor;
       }
 
       row.appendChild(arrow);
-      row.appendChild(icon);
+      row.appendChild(dot);
       row.appendChild(label);
 
       row.addEventListener('click', () => toggleFolder(item.path, arrow));
@@ -91,7 +90,6 @@ export function renderTree(tree, handlers, depth = 0, container = byId('file-tre
         ]);
       });
 
-      // 드래그 드롭 타겟
       row.addEventListener('dragover', (e) => { e.preventDefault(); row.classList.add('drag-over'); });
       row.addEventListener('dragleave', () => row.classList.remove('drag-over'));
       row.addEventListener('drop', (e) => {
@@ -104,14 +102,14 @@ export function renderTree(tree, handlers, depth = 0, container = byId('file-tre
       });
 
       container.appendChild(row);
-      const children = createNode('div', { dataset: { folder: item.path } });
+      const children = createNode('div', { className: 'tree-children', dataset: { folder: item.path } });
       if (isCollapsed) children.style.display = 'none';
       container.appendChild(children);
       renderTree(item.children, handlers, depth + 1, children);
       return;
     }
 
-    // 파일 — 드래그 가능
+    // 파일
     row.draggable = true;
     row.addEventListener('dragstart', (e) => {
       e.dataTransfer.effectAllowed = 'move';
@@ -120,7 +118,6 @@ export function renderTree(tree, handlers, depth = 0, container = byId('file-tre
     });
     row.addEventListener('dragend', () => row.classList.remove('dragging'));
 
-    row.appendChild(createNode('span', { className: 'tree-icon', text: '📝' }));
     row.appendChild(createNode('span', { className: 'tree-label', text: item.name }));
 
     const remove = createNode('button', { className: 'tree-delete', text: '✕' });
@@ -139,6 +136,44 @@ export function renderTree(tree, handlers, depth = 0, container = byId('file-tre
 
     container.appendChild(row);
   });
+}
+
+export function startInlineRename(path, onConfirm) {
+  const row = document.querySelector(`.tree-item[data-path="${CSS.escape(path)}"]`);
+  if (!row) return;
+  const label = row.querySelector('.tree-label');
+  if (!label) return;
+
+  const originalText = label.textContent;
+  const input = document.createElement('input');
+  input.className = 'tree-rename-input';
+  input.value = originalText;
+  label.replaceWith(input);
+  input.focus();
+  input.select();
+
+  let done = false;
+
+  function confirm() {
+    if (done) return;
+    done = true;
+    const newName = input.value.trim();
+    input.replaceWith(label);
+    if (newName && newName !== originalText) onConfirm(newName);
+  }
+
+  function cancel() {
+    if (done) return;
+    done = true;
+    input.replaceWith(label);
+  }
+
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); confirm(); }
+    if (e.key === 'Escape') { e.preventDefault(); cancel(); }
+    e.stopPropagation();
+  });
+  input.addEventListener('blur', confirm);
 }
 
 export function setActiveTreeItem(path) {
@@ -170,7 +205,7 @@ export function applyTagFilter(activeTag, notes) {
   });
 
   if (!activeTag) {
-    document.querySelectorAll('[data-folder]').forEach((folder) => {
+    document.querySelectorAll('.tree-children').forEach((folder) => {
       if (!collapsedFolders.has(folder.dataset.folder)) folder.style.display = '';
     });
     document.querySelectorAll('.tree-item[data-type="dir"]').forEach((row) => {
@@ -179,7 +214,7 @@ export function applyTagFilter(activeTag, notes) {
     return;
   }
 
-  [...document.querySelectorAll('[data-folder]')].reverse().forEach((folder) => {
+  [...document.querySelectorAll('.tree-children')].reverse().forEach((folder) => {
     const hasVisibleChild = [...folder.children].some((child) => child.style.display !== 'none');
     folder.style.display = hasVisibleChild ? '' : 'none';
     const row = document.querySelector(`.tree-item[data-type="dir"][data-path="${folder.dataset.folder}"]`);
@@ -188,7 +223,7 @@ export function applyTagFilter(activeTag, notes) {
 }
 
 function toggleFolder(path, arrow) {
-  const node = document.querySelector(`[data-folder="${path}"]`);
+  const node = document.querySelector(`.tree-children[data-folder="${path}"]`);
   if (!node) return;
   const willCollapse = node.style.display !== 'none';
   node.style.display = willCollapse ? 'none' : '';

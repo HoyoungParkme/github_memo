@@ -4,6 +4,7 @@ import { moveToTrash } from './services/trash-service.js';
 import { showEmptyState } from './ui/editor-view.js';
 import { closeAllModals, readFileForm, readFolderForm } from './ui/modal-view.js';
 import { showToast } from './ui/toast.js';
+import { startInlineRename } from './ui/tree-view.js';
 
 export function createFileActions(api, reload, openNote) {
   return { createNewFile, createNewFolder, deleteNote, renameFile, moveFile, renameFolder };
@@ -51,19 +52,19 @@ export function createFileActions(api, reload, openNote) {
     }
   }
 
-  async function renameFile(file) {
-    const newName = window.prompt('새 이름을 입력해 (확장자 제외):', file.name);
-    if (!newName || newName.trim() === file.name) return;
-    try {
-      const updated = await renameNote(api, file, newName.trim());
-      if (appState.currentFile?.path === file.path) {
-        appState.currentFile = { ...appState.currentFile, path: updated.path };
+  function renameFile(file) {
+    startInlineRename(file.path, async (newName) => {
+      try {
+        const updated = await renameNote(api, file, newName);
+        if (appState.currentFile?.path === file.path) {
+          appState.currentFile = { ...appState.currentFile, path: updated.path };
+        }
+        await reload();
+        showToast('이름이 변경됐어', 'success');
+      } catch (error) {
+        showToast(`이름 변경 실패: ${error.message}`, 'error');
       }
-      await reload();
-      showToast('이름이 변경됐어', 'success');
-    } catch (error) {
-      showToast(`이름 변경 실패: ${error.message}`, 'error');
-    }
+    });
   }
 
   async function moveFile(file, targetFolder) {
@@ -83,26 +84,26 @@ export function createFileActions(api, reload, openNote) {
     }
   }
 
-  async function renameFolder(folder) {
-    const newName = window.prompt('새 폴더 이름을 입력해:', folder.name);
-    if (!newName || newName.trim() === folder.name) return;
-    const safe = (v) => v.replace(/[^a-zA-Z0-9가-힣ㄱ-ㅎ\s_-]/g, '').replace(/\s+/g, '-').toLowerCase() || 'untitled';
-    const parts = folder.path.split('/');
-    parts[parts.length - 1] = safe(newName.trim());
-    const newFolderPath = parts.join('/');
-    if (newFolderPath === folder.path) return;
-    showToast('폴더 이름 변경 중...', 'info', 15000);
-    try {
-      await renameFolderRecursive(folder, folder.path, newFolderPath);
-      if (appState.currentFile?.path.startsWith(folder.path + '/')) {
-        appState.currentFile = null;
-        showEmptyState();
+  function renameFolder(folder) {
+    startInlineRename(folder.path, async (newName) => {
+      const safe = (v) => v.replace(/[^a-zA-Z0-9가-힣ㄱ-ㅎ\s_-]/g, '').replace(/\s+/g, '-').toLowerCase() || 'untitled';
+      const parts = folder.path.split('/');
+      parts[parts.length - 1] = safe(newName);
+      const newFolderPath = parts.join('/');
+      if (newFolderPath === folder.path) return;
+      showToast('폴더 이름 변경 중...', 'info', 15000);
+      try {
+        await renameFolderRecursive(folder, folder.path, newFolderPath);
+        if (appState.currentFile?.path.startsWith(folder.path + '/')) {
+          appState.currentFile = null;
+          showEmptyState();
+        }
+        await reload();
+        showToast('폴더 이름이 변경됐어', 'success');
+      } catch (error) {
+        showToast(`폴더 이름 변경 실패: ${error.message}`, 'error');
       }
-      await reload();
-      showToast('폴더 이름이 변경됐어', 'success');
-    } catch (error) {
-      showToast(`폴더 이름 변경 실패: ${error.message}`, 'error');
-    }
+    });
   }
 
   async function renameFolderRecursive(folderItem, oldBase, newBase) {
