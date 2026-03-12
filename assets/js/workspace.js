@@ -16,7 +16,7 @@ export function createWorkspace(api) {
   const fileActions = createFileActions(api, load, openNote);
   bindEditorControls({ onSave: saveCurrentNote, onInput: handleEditorInput, onRemoveTag: removeTag, onAddTag: addTag, onTabChange: changeTab });
   bindSearchControls({ onInput: searchNotes, onSelect: openFromSearch });
-  bindModalControls(fileActions);
+  bindModalControls({ onCreateFile: fileActions.createNewFile, onCreateFolder: fileActions.createNewFolder });
   return { load, openSearch, closeTransientUi, confirmLeave, setOpeners };
 
   function setOpeners(openFileModal, openFolderModal) {
