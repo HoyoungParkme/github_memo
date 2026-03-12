@@ -26,9 +26,9 @@ export function bindSlashCommands(ta, onInput) {
   boundTa = ta;
   ta.addEventListener('input', () => handleInput(ta));
   ta.addEventListener('click', hidePopup);
-  ta.addEventListener('blur', () => setTimeout(hidePopup, 150));
+  ta.addEventListener('blur', () => setTimeout(hidePopup, 200));
   ta.addEventListener('keydown', (e) => {
-    if (!popup) return;
+    if (!popup || e.isComposing) return;
     if (e.key === 'ArrowDown') { e.preventDefault(); e.stopPropagation(); moveSelection(1); }
     else if (e.key === 'ArrowUp') { e.preventDefault(); e.stopPropagation(); moveSelection(-1); }
     else if (e.key === 'Enter' || e.key === 'Tab') { e.preventDefault(); e.stopPropagation(); selectActive(ta); }
@@ -128,7 +128,8 @@ function showPopup(ta, commands) {
     label.textContent = cmd.label;
     item.appendChild(icon);
     item.appendChild(label);
-    item.addEventListener('mousedown', (e) => { e.preventDefault(); applyCommand(ta, cmd.id); });
+    item.addEventListener('mousedown', (e) => { e.preventDefault(); });
+    item.addEventListener('click', () => { applyCommand(ta, cmd.id); });
     popup.appendChild(item);
   });
 
