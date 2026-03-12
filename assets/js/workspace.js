@@ -11,12 +11,15 @@ import { bindModalControls, closeAllModals } from './ui/modal-view.js';
 import { buildNoteIndex, buildSnippet, createFuse } from './services/index-service.js';
 import { fetchTree } from './services/tree-service.js';
 import { createFileActions } from './workspace-file-actions.js';
+import { getTrashItems, permanentDelete, restoreFromTrash, cleanExpiredItems, TRASH_EXPIRY_DAYS } from './services/trash-service.js';
 
 export function createWorkspace(api) {
   const fileActions = createFileActions(api, load, openNote);
   bindEditorControls({ onSave: saveCurrentNote, onInput: handleEditorInput, onRemoveTag: removeTag, onAddTag: addTag, onTabChange: changeTab });
   bindSearchControls({ onInput: searchNotes, onSelect: openFromSearch });
   bindModalControls({ onCreateFile: fileActions.createNewFile, onCreateFolder: fileActions.createNewFolder });
+  setupTrashPanel();
+  cleanExpiredItems(api).catch(() => {});
   return { load, openSearch, closeTransientUi, confirmLeave, setOpeners };
 
   function setOpeners(openFileModal, openFolderModal) {
@@ -30,7 +33,12 @@ export function createWorkspace(api) {
     showTreeLoading();
     try {
       appState.tree = await fetchTree(api, appState.config.notesPath);
-      renderTree(appState.tree, { onOpen: openNote, onDelete: fileActions.deleteNote });
+      renderTree(appState.tree, {
+        onOpen: openNote,
+        onDelete: fileActions.deleteNote,
+        onRename: fileActions.renameFile,
+        onMove: fileActions.moveFile,
+      });
       appState.notes = await buildNoteIndex(appState.tree, api, appState.config);
       appState.fuse = createFuse(appState.notes);
       syncTagFilter();
@@ -139,5 +147,84 @@ export function createWorkspace(api) {
   function renderCurrent(body = getEditorBody()) {
     renderPreview(body, appState.currentTags);
     updateToc(body, appState.tab);
+  }
+
+  function setupTrashPanel() {
+    const btn = document.getElementById('trash-btn');
+    const overlay = document.getElementById('trash-overlay');
+    const closeBtn = document.getElementById('trash-close-btn');
+    if (btn) btn.addEventListener('click', openTrashPanel);
+    if (closeBtn) closeBtn.addEventListener('click', () => overlay?.classList.remove('is-open'));
+    if (overlay) overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.classList.remove('is-open'); });
+  }
+
+  function openTrashPanel() {
+    const overlay = document.getElementById('trash-overlay');
+    const list = document.getElementById('trash-list');
+    if (!overlay || !list) return;
+    overlay.classList.add('is-open');
+    renderTrashList(list);
+  }
+
+  function renderTrashList(list) {
+    list.innerHTML = '';
+    const items = getTrashItems();
+    if (!items.length) {
+      list.innerHTML = '<div class="trash-empty">휴지통이 비어있어요</div>';
+      return;
+    }
+    items.slice().reverse().forEach((item) => {
+      const row = document.createElement('div');
+      row.className = 'trash-item';
+      const info = document.createElement('div');
+      info.className = 'trash-info';
+      const name = document.createElement('span');
+      name.className = 'trash-name';
+      name.textContent = item.name;
+      const daysLeft = TRASH_EXPIRY_DAYS - Math.floor((Date.now() - new Date(item.deletedAt).getTime()) / 86400000);
+      const date = document.createElement('span');
+      date.className = 'trash-date';
+      date.textContent = `${new Date(item.deletedAt).toLocaleDateString('ko-KR')} 삭제 · ${daysLeft}일 후 자동 삭제`;
+      info.appendChild(name);
+      info.appendChild(date);
+      const actions = document.createElement('div');
+      actions.className = 'trash-actions';
+      const restoreBtn = document.createElement('button');
+      restoreBtn.className = 'trash-btn-restore';
+      restoreBtn.textContent = '복원';
+      restoreBtn.addEventListener('click', async () => {
+        restoreBtn.disabled = true;
+        restoreBtn.textContent = '복원 중...';
+        try {
+          await restoreFromTrash(api, item);
+          await load();
+          renderTrashList(list);
+          showToast('복원됐어', 'success');
+        } catch (e) {
+          restoreBtn.disabled = false;
+          restoreBtn.textContent = '복원';
+          showToast(`복원 실패: ${e.message}`, 'error');
+        }
+      });
+      const deleteBtn = document.createElement('button');
+      deleteBtn.className = 'trash-btn-delete';
+      deleteBtn.textContent = '영구 삭제';
+      deleteBtn.addEventListener('click', async () => {
+        if (!window.confirm('영구적으로 삭제할까? 되돌릴 수 없어.')) return;
+        deleteBtn.disabled = true;
+        try {
+          await permanentDelete(api, item);
+          renderTrashList(list);
+        } catch (e) {
+          deleteBtn.disabled = false;
+          showToast(`삭제 실패: ${e.message}`, 'error');
+        }
+      });
+      actions.appendChild(restoreBtn);
+      actions.appendChild(deleteBtn);
+      row.appendChild(info);
+      row.appendChild(actions);
+      list.appendChild(row);
+    });
   }
 }

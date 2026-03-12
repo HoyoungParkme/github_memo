@@ -1,11 +1,12 @@
 import { appState } from './state.js';
-import { createFolder, createNote, deleteNoteFile } from './services/note-files.js';
+import { createFolder, createNote, renameNote, moveNote } from './services/note-files.js';
+import { moveToTrash } from './services/trash-service.js';
 import { showEmptyState } from './ui/editor-view.js';
 import { closeAllModals, readFileForm, readFolderForm } from './ui/modal-view.js';
 import { showToast } from './ui/toast.js';
 
 export function createFileActions(api, reload, openNote) {
-  return { createNewFile, createNewFolder, deleteNote };
+  return { createNewFile, createNewFolder, deleteNote, renameFile, moveFile };
 
   async function createNewFile() {
     const { name, folder } = readFileForm();
@@ -35,18 +36,49 @@ export function createFileActions(api, reload, openNote) {
   }
 
   async function deleteNote(event, file) {
-    event.stopPropagation();
-    if (!window.confirm(`"${file.name}"을 삭제할까? 되돌릴 수 없어.`)) return;
+    event?.stopPropagation();
+    if (!window.confirm(`"${file.name}"을 휴지통으로 이동할까?`)) return;
     try {
-      await deleteNoteFile(api, file);
+      await moveToTrash(api, file);
       if (appState.currentFile?.path === file.path) {
         appState.currentFile = null;
         showEmptyState();
       }
       await reload();
-      showToast('삭제 완료', 'success');
+      showToast('휴지통으로 이동했어', 'success');
     } catch (error) {
-      showToast(`삭제 실패: ${error.message}`, 'error');
+      showToast(`이동 실패: ${error.message}`, 'error');
+    }
+  }
+
+  async function renameFile(file) {
+    const newName = window.prompt('새 이름을 입력해 (확장자 제외):', file.name);
+    if (!newName || newName.trim() === file.name) return;
+    try {
+      const updated = await renameNote(api, file, newName.trim());
+      if (appState.currentFile?.path === file.path) {
+        appState.currentFile = { ...appState.currentFile, path: updated.path };
+      }
+      await reload();
+      showToast('이름이 변경됐어', 'success');
+    } catch (error) {
+      showToast(`이름 변경 실패: ${error.message}`, 'error');
+    }
+  }
+
+  async function moveFile(file, targetFolder) {
+    const currentFolder = file.path.split('/').slice(0, -1).join('/');
+    if (currentFolder === targetFolder) return;
+    try {
+      await moveNote(api, file, targetFolder);
+      if (appState.currentFile?.path === file.path) {
+        appState.currentFile = null;
+        showEmptyState();
+      }
+      await reload();
+      showToast('파일이 이동됐어', 'success');
+    } catch (error) {
+      showToast(`이동 실패: ${error.message}`, 'error');
     }
   }
 }

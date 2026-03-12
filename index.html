@@ -38,7 +38,7 @@
   <div id="app">
     <div class="header"><div class="header-logo">dev<span>memo</span></div><div class="header-breadcrumb" id="breadcrumb">파일을 선택하세요</div><div class="header-actions"><span class="save-status" id="save-status"></span><button class="header-btn" id="search-btn" title="검색">🔍</button><button class="header-btn" id="theme-btn" title="테마 전환">🌙</button><button class="header-btn" id="settings-btn" title="설정">⚙️</button><button class="header-save-btn" id="save-btn"><span id="save-icon">💾</span> 저장</button></div></div>
     <div class="body">
-      <aside class="sidebar"><div class="sidebar-section"><span>파일</span><div class="sidebar-actions"><button class="sidebar-action-btn" id="new-folder-btn" title="새 폴더">📁</button><button class="sidebar-action-btn" id="new-note-btn" title="새 메모">📄</button></div></div><div class="file-tree" id="file-tree"></div><div class="sidebar-section sidebar-section-bottom">태그</div><div class="tag-filter" id="tag-filter"></div><button class="sidebar-new-btn" id="new-note-footer-btn">+ 새 메모</button></aside>
+      <aside class="sidebar"><div class="sidebar-section"><span>파일</span><div class="sidebar-actions"><button class="sidebar-action-btn" id="new-folder-btn" title="새 폴더">📁</button><button class="sidebar-action-btn" id="new-note-btn" title="새 메모">📄</button><button class="sidebar-action-btn" id="trash-btn" title="휴지통">🗑</button></div></div><div class="file-tree" id="file-tree"></div><div class="sidebar-section sidebar-section-bottom">태그</div><div class="tag-filter" id="tag-filter"></div><button class="sidebar-new-btn" id="new-note-footer-btn">+ 새 메모</button></aside>
       <main class="editor-area">
         <div class="empty-state" id="empty-state"><div class="empty-icon">📝</div><div class="empty-title">메모를 선택하세요</div><div class="empty-desc">왼쪽에서 메모를 클릭하거나 새 메모를 만들어보세요</div><button class="empty-action" id="new-note-empty-btn">+ 새 메모 만들기</button></div>
         <div id="editor-container"><div class="editor-tabs"><button class="editor-tab active" data-tab="edit">✏️ 편집</button><button class="editor-tab" data-tab="preview">👁 미리보기</button><button class="editor-tab" data-tab="split">⬜ 분할</button></div><div class="editor-content" id="editor-content"><textarea class="code-editor" id="code-editor" spellcheck="false"></textarea><div class="preview-area" id="preview-area"></div></div><div class="meta-bar"><span class="meta-label">태그:</span><div class="meta-tags" id="meta-tags"></div><input class="meta-tag-input" id="tag-input" placeholder="태그 입력 후 Enter" maxlength="20"></div></div>
@@ -50,5 +50,16 @@
   <div class="modal-overlay" id="new-file-modal"><div class="modal-box"><div class="modal-title">새 메모</div><input class="modal-input" id="new-file-name" placeholder="파일명 (예: binary-search)"><div class="modal-hint">notes/<span id="file-path-preview">파일명</span>.md 에 저장돼</div><select class="modal-input" id="new-file-folder"></select><div class="modal-actions"><button class="modal-cancel" data-close-modal="new-file-modal">취소</button><button class="modal-confirm" id="new-file-confirm">만들기</button></div></div></div>
   <div class="modal-overlay" id="new-folder-modal"><div class="modal-box"><div class="modal-title">새 폴더</div><input class="modal-input" id="new-folder-name" placeholder="폴더명 (예: 알고리즘)"><div class="modal-hint">notes/<span id="folder-path-preview">폴더명</span>/ 로 만들어져</div><div class="modal-actions"><button class="modal-cancel" data-close-modal="new-folder-modal">취소</button><button class="modal-confirm" id="new-folder-confirm">만들기</button></div></div></div>
   <div class="toast-container" id="toast-container"></div>
+  <div class="trash-overlay" id="trash-overlay">
+    <div class="trash-modal">
+      <div class="trash-header">
+        <span>🗑 휴지통</span>
+        <button class="trash-close-btn" id="trash-close-btn">✕</button>
+      </div>
+      <div class="trash-list" id="trash-list">
+        <div class="trash-empty">휴지통이 비어있어요</div>
+      </div>
+    </div>
+  </div>
 </body>
 </html>
