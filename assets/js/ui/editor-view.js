@@ -1,6 +1,101 @@
 import { byId, clear, createNode, hide, show } from '../utils/dom.js';
 import { bindSlashCommands } from './slash-commands.js';
 
+const LINE_NUM_STORAGE_KEY = 'devmemo_line_numbers';
+
+function isLineNumbersEnabled() {
+  return localStorage.getItem(LINE_NUM_STORAGE_KEY) === '1';
+}
+
+function applyLineNumbers(enabled) {
+  document.getElementById('app')?.classList.toggle('show-line-numbers', enabled);
+  const btn = byId('line-num-btn');
+  if (btn) btn.classList.toggle('active', enabled);
+  if (enabled) updateLineNumbers();
+}
+
+function updateLineNumbers() {
+  const ta = byId('code-editor');
+  const el = byId('line-numbers');
+  if (!ta || !el) return;
+  const count = (ta.value.match(/\n/g) || []).length + 1;
+  while (el.children.length < count) {
+    const span = document.createElement('span');
+    span.textContent = String(el.children.length + 1);
+    el.appendChild(span);
+  }
+  while (el.children.length > count) el.removeChild(el.lastChild);
+  el.scrollTop = ta.scrollTop;
+}
+
+export function bindLineNumberToggle() {
+  const btn = byId('line-num-btn');
+  if (!btn) return;
+  applyLineNumbers(isLineNumbersEnabled());
+  btn.addEventListener('click', () => {
+    const next = !isLineNumbersEnabled();
+    localStorage.setItem(LINE_NUM_STORAGE_KEY, next ? '1' : '0');
+    applyLineNumbers(next);
+  });
+  const ta = byId('code-editor');
+  if (ta) {
+    ta.addEventListener('scroll', () => {
+      const el = byId('line-numbers');
+      if (el) el.scrollTop = ta.scrollTop;
+    });
+  }
+}
+
+export function syncLineNumbers() {
+  if (isLineNumbersEnabled()) updateLineNumbers();
+}
+
+export function bindImagePaste(onUpload) {
+  const ta = byId('code-editor');
+  if (!ta) return;
+  ta.addEventListener('paste', async (e) => {
+    const items = [...(e.clipboardData?.items || [])];
+    const imageItem = items.find((item) => item.type.startsWith('image/'));
+    if (!imageItem) return;
+    e.preventDefault();
+    const file = imageItem.getAsFile();
+    if (!file) return;
+    const ext = file.type.split('/')[1]?.split(';')[0] || 'png';
+    const name = `paste-${Date.now()}.${ext}`;
+    const path = `assets/images/${name}`;
+
+    const placeholder = `![업로드 중...](uploading)`;
+    const start = ta.selectionStart;
+    ta.setRangeText(placeholder, start, ta.selectionEnd, 'end');
+
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      const bytes = new Uint8Array(arrayBuffer);
+      let binary = '';
+      bytes.forEach((b) => { binary += String.fromCharCode(b); });
+      const base64 = btoa(binary);
+      const result = await onUpload(path, base64, `이미지 업로드: ${name}`);
+      const url = result?.content?.download_url || path;
+      const md = `![${name}](${url})`;
+      const current = ta.value;
+      const idx = current.indexOf(placeholder, start);
+      if (idx !== -1) {
+        ta.value = current.slice(0, idx) + md + current.slice(idx + placeholder.length);
+        ta.selectionStart = ta.selectionEnd = idx + md.length;
+      }
+    } catch (err) {
+      const current = ta.value;
+      const idx = current.indexOf(placeholder, start);
+      if (idx !== -1) {
+        ta.value = current.slice(0, idx) + current.slice(idx + placeholder.length);
+        ta.selectionStart = ta.selectionEnd = idx;
+      }
+      throw err;
+    }
+    ta.dispatchEvent(new Event('input'));
+  });
+}
+
 export function bindEditorControls({ onSave, onInput, onRemoveTag, onAddTag, onTabChange }) {
   byId('save-btn').addEventListener('click', onSave);
   byId('code-editor').addEventListener('input', onInput);

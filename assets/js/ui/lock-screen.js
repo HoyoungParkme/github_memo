@@ -1,8 +1,7 @@
 import { byId, hide, show } from '../utils/dom.js';
 
-export function bindLockControls(onUnlock, onReset) {
+export function bindLockControls(onUnlock) {
   byId('unlock-btn').addEventListener('click', onUnlock);
-  byId('reset-btn').addEventListener('click', onReset);
   byId('pw-input').addEventListener('keydown', (event) => {
     if (event.key === 'Enter') onUnlock();
   });
@@ -10,7 +9,6 @@ export function bindLockControls(onUnlock, onReset) {
 
 export function showLockScreen() {
   show(byId('lock-screen'), 'flex');
-  hide(byId('setup-screen'));
   hide(byId('app'));
   byId('pw-input').focus();
 }

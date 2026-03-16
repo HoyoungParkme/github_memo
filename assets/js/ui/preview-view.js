@@ -14,9 +14,33 @@ export function renderPreview(markdown, tags = []) {
   while (wrapper.firstChild) preview.appendChild(wrapper.firstChild);
 
   preview.querySelectorAll('pre code').forEach((block) => {
+    const lang = [...block.classList].find((c) => c.startsWith('language-'))?.replace('language-', '');
+    if (lang === 'mermaid') {
+      renderMermaidBlock(block);
+      return;
+    }
     window.hljs.highlightElement(block);
     appendCopyButton(block);
   });
+}
+
+function renderMermaidBlock(block) {
+  const pre = block.parentElement;
+  const code = block.textContent || '';
+  const container = document.createElement('div');
+  container.className = 'mermaid-block';
+  pre.replaceWith(container);
+  if (window.mermaid) {
+    const id = `mermaid-${Math.random().toString(36).slice(2)}`;
+    window.mermaid.render(id, code).then(({ svg }) => {
+      container.innerHTML = svg;
+    }).catch((err) => {
+      container.textContent = `Mermaid 오류: ${err.message}`;
+      container.className = 'mermaid-block mermaid-error';
+    });
+  } else {
+    container.textContent = code;
+  }
 }
 
 function configureMarked() {

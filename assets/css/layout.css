@@ -130,7 +130,8 @@
 
 .body,
 .editor-area,
-.editor-content {
+.editor-content,
+#editor-container {
   flex: 1;
 }
 

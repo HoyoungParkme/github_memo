@@ -3,7 +3,7 @@ export const defaultConfig = Object.freeze({
   pwHash: '',
 });
 
-export const initialPasswordHash = 'wc:98e88fba67a35360940834467610b681d2b17a978980a869a08fd43f171b4547';
+export const initialPasswordHash = 'wc:86cb35a822329fe1de40eb82a1791be1f66f8bd327446686bdd859a89e436853';
 
 export const storageKeys = Object.freeze({
   meta: 'devmemo_meta_v3',

@@ -34,5 +34,8 @@ export function createGitHubApi() {
         body: JSON.stringify({ message, sha }),
       });
     },
+    putBinaryContent(path, base64, message) {
+      return request(path, { method: 'PUT', body: JSON.stringify({ message, content: base64 }) });
+    },
   };
 }

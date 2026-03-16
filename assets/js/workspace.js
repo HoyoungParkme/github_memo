@@ -4,7 +4,7 @@ import { decodeBase64 } from './utils/encoding.js';
 import { showToast } from './ui/toast.js';
 import { renderPreview } from './ui/preview-view.js';
 import { clearToc, updateToc } from './ui/toc-view.js';
-import { bindEditorControls, bindSlashCommandsToEditor, bindToolbar, getEditorBody, openEditor, renderNoteTabBar, renderTags, setSaveState, showEmptyState, switchTab } from './ui/editor-view.js';
+import { bindEditorControls, bindImagePaste, bindLineNumberToggle, bindSlashCommandsToEditor, bindToolbar, getEditorBody, openEditor, renderNoteTabBar, renderTags, setSaveState, showEmptyState, switchTab, syncLineNumbers } from './ui/editor-view.js';
 import { applyTagFilter, renderTagFilter, renderTree, setActiveTreeItem, showTreeError, showTreeLoading } from './ui/tree-view.js';
 import { bindSearchControls, closeSearch, openSearch, renderSearchResults } from './ui/search-view.js';
 import { bindModalControls, closeAllModals } from './ui/modal-view.js';
@@ -21,6 +21,18 @@ export function createWorkspace(api) {
   bindEditorControls({ onSave: saveCurrentNote, onInput: handleEditorInput, onRemoveTag: removeTag, onAddTag: addTag, onTabChange: changeTab });
   bindToolbar(handleEditorInput);
   bindSlashCommandsToEditor(handleEditorInput);
+  bindLineNumberToggle();
+  bindImagePaste(async (path, base64, message) => {
+    try {
+      showToast('이미지 업로드 중...', 'info');
+      const result = await api.putBinaryContent(path, base64, message);
+      showToast('이미지 업로드 완료', 'success');
+      return result;
+    } catch (err) {
+      showToast(`이미지 업로드 실패: ${err.message}`, 'error');
+      throw err;
+    }
+  });
   bindSearchControls({ onInput: searchNotes, onSelect: openFromSearch });
   bindModalControls({ onCreateFile: fileActions.createNewFile, onCreateFolder: fileActions.createNewFolder });
   setupTrashPanel();
@@ -122,6 +134,7 @@ export function createWorkspace(api) {
     setActiveTreeItem(path);
     openEditor(path, appState.config.notesPath, tab.body, tab.tags, appState.tab);
     renderCurrent(tab.body);
+    syncLineNumbers();
     setSaveState(tab.isDirty ? '저장되지 않은 변경사항' : '');
     refreshTabBar();
   }
@@ -217,6 +230,7 @@ export function createWorkspace(api) {
       refreshTabBar();
     }
     renderCurrent();
+    syncLineNumbers();
   }
 
   function addTag(value) {
