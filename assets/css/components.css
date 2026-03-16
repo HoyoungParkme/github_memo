@@ -6,12 +6,23 @@
   border-radius: var(--radius-lg);
   padding: 4px;
   min-width: 200px;
-  max-height: 260px;
+  max-height: 300px;
   overflow-y: auto;
   box-shadow: var(--shadow-lg);
   z-index: 8000;
   animation: menu-in 0.1s ease;
   scrollbar-width: thin;
+}
+
+.lang-picker::before {
+  content: '언어 선택';
+  display: block;
+  padding: 4px 10px 6px;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
 }
 
 .slash-item {

@@ -1,5 +1,5 @@
 import { byId, clear, createNode, hide, show } from '../utils/dom.js';
-import { bindSlashCommands } from './slash-commands.js';
+import { bindSlashCommands, showCodeBlockPicker } from './slash-commands.js';
 
 const LINE_NUM_STORAGE_KEY = 'devmemo_line_numbers';
 
@@ -121,9 +121,32 @@ export function bindToolbar(onInput) {
     const btn = e.target.closest('[data-action]');
     if (!btn) return;
     e.preventDefault();
+    if (btn.dataset.action === 'codeblock') {
+      const ta = byId('code-editor');
+      showCodeBlockPicker(ta, (lang) => {
+        applyCodeblockAtCursor(ta, lang);
+        onInput();
+      });
+      return;
+    }
     applyFormat(btn.dataset.action);
     onInput();
   });
+}
+
+function applyCodeblockAtCursor(ta, lang) {
+  const start = ta.selectionStart;
+  const end = ta.selectionEnd;
+  const selected = ta.value.slice(start, end);
+  const fence = lang ? `\`\`\`${lang}\n` : '```\n';
+  const placeholder = '코드 블록';
+  const inner = selected || placeholder;
+  ta.setRangeText(fence + inner + '\n```', start, end, 'select');
+  if (!selected) {
+    ta.selectionStart = start + fence.length;
+    ta.selectionEnd = start + fence.length + inner.length;
+  }
+  ta.focus();
 }
 
 export function bindSlashCommandsToEditor(onInput) {

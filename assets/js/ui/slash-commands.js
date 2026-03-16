@@ -14,24 +14,46 @@ const COMMANDS = [
   { id: 'link',      icon: '🔗',   label: '링크',        aliases: ['link', '링크', 'l'] },
 ];
 
+const CODE_LANGUAGES = [
+  { id: '',           icon: 'TXT', label: '없음 (plain)' },
+  { id: 'javascript', icon: 'JS',  label: 'JavaScript' },
+  { id: 'typescript', icon: 'TS',  label: 'TypeScript' },
+  { id: 'python',     icon: 'PY',  label: 'Python' },
+  { id: 'java',       icon: 'JAV', label: 'Java' },
+  { id: 'kotlin',     icon: 'KT',  label: 'Kotlin' },
+  { id: 'go',         icon: 'GO',  label: 'Go' },
+  { id: 'rust',       icon: 'RS',  label: 'Rust' },
+  { id: 'c',          icon: 'C',   label: 'C' },
+  { id: 'cpp',        icon: 'C++', label: 'C++' },
+  { id: 'csharp',     icon: 'C#',  label: 'C#' },
+  { id: 'sql',        icon: 'SQL', label: 'SQL' },
+  { id: 'bash',       icon: 'SH',  label: 'Bash / Shell' },
+  { id: 'html',       icon: 'HTM', label: 'HTML' },
+  { id: 'css',        icon: 'CSS', label: 'CSS' },
+  { id: 'json',       icon: 'JSN', label: 'JSON' },
+  { id: 'yaml',       icon: 'YML', label: 'YAML' },
+  { id: 'markdown',   icon: 'MD',  label: 'Markdown' },
+  { id: 'mermaid',    icon: 'MRM', label: 'Mermaid' },
+];
+
 let popup = null;
 let activeIdx = 0;
 let slashPos = -1;
 let filteredCommands = [];
 let boundTa = null;
 let onInputCallback = null;
+let docDownHandler = null;
 
 export function bindSlashCommands(ta, onInput) {
   onInputCallback = onInput;
   boundTa = ta;
   ta.addEventListener('input', () => handleInput(ta));
-  ta.addEventListener('click', hidePopup);
-  ta.addEventListener('blur', () => setTimeout(hidePopup, 200));
+  ta.addEventListener('compositionend', () => setTimeout(() => handleInput(ta), 0));
   ta.addEventListener('keydown', (e) => {
-    if (!popup || e.isComposing) return;
+    if (!popup) return;
     if (e.key === 'ArrowDown') { e.preventDefault(); e.stopPropagation(); moveSelection(1); }
     else if (e.key === 'ArrowUp') { e.preventDefault(); e.stopPropagation(); moveSelection(-1); }
-    else if (e.key === 'Enter' || e.key === 'Tab') { e.preventDefault(); e.stopPropagation(); selectActive(ta); }
+    else if ((e.key === 'Enter' || e.key === 'Tab') && !e.isComposing) { e.preventDefault(); e.stopPropagation(); selectActive(ta); }
     else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); hidePopup(); }
   });
 }
@@ -42,7 +64,6 @@ function handleInput(ta) {
   const lineStart = text.lastIndexOf('\n', pos - 1) + 1;
   const lineText = text.slice(lineStart, pos);
 
-  // /커맨드가 행 시작에 있어야 함 (앞에 공백만 허용)
   const match = lineText.match(/^(\s*)\/(\S*)$/);
   if (match) {
     slashPos = lineStart + match[1].length;
@@ -69,8 +90,15 @@ function moveSelection(delta) {
 }
 
 function selectActive(ta) {
-  const id = filteredCommands[activeIdx]?.id;
-  if (id) applyCommand(ta, id);
+  const cmd = filteredCommands[activeIdx];
+  if (!cmd) return;
+  if (cmd.id === 'codeblock') {
+    const savedSlashPos = slashPos;
+    hidePopup();
+    showCodeBlockPicker(ta, (lang) => applyCodeblockAtSlashPos(ta, savedSlashPos, lang));
+  } else {
+    applyCommand(ta, cmd.id);
+  }
 }
 
 function applyCommand(ta, id) {
@@ -86,12 +114,11 @@ function applyCommand(ta, id) {
 
   const linePrefix = { h1: '# ', h2: '## ', h3: '### ', quote: '> ', ul: '- ', task: '- [ ] ' };
   const wrapMap = {
-    bold:      ['**', '**', '굵은 텍스트'],
-    italic:    ['*', '*', '기울임'],
-    strike:    ['~~', '~~', '취소선'],
-    code:      ['`', '`', '코드'],
-    codeblock: ['```\n', '\n```', '코드 블록'],
-    link:      ['[', '](url)', '링크 텍스트'],
+    bold:   ['**', '**', '굵은 텍스트'],
+    italic: ['*', '*', '기울임'],
+    strike: ['~~', '~~', '취소선'],
+    code:   ['`', '`', '코드'],
+    link:   ['[', '](url)', '링크 텍스트'],
   };
 
   if (linePrefix[id]) {
@@ -111,6 +138,94 @@ function applyCommand(ta, id) {
   onInputCallback?.();
 }
 
+function applyCodeblockAtSlashPos(ta, savedSlashPos, lang) {
+  const pos = ta.selectionStart;
+  const text = ta.value;
+  const lineStart = text.lastIndexOf('\n', savedSlashPos - 1) + 1;
+  const before = text.slice(0, lineStart);
+  const after = text.slice(pos);
+  const fence = lang ? `\`\`\`${lang}\n` : '```\n';
+  const placeholder = '코드 블록';
+  ta.value = before + fence + placeholder + '\n```' + after;
+  ta.selectionStart = before.length + fence.length;
+  ta.selectionEnd = before.length + fence.length + placeholder.length;
+  ta.focus();
+  onInputCallback?.();
+}
+
+export function showCodeBlockPicker(ta, onSelect) {
+  let pickerPopup = null;
+  let pickerIdx = 0;
+  let pickerDocHandler = null;
+  let keyHandler = null;
+
+  const close = () => {
+    pickerPopup?.remove();
+    pickerPopup = null;
+    if (pickerDocHandler) document.removeEventListener('pointerdown', pickerDocHandler);
+    if (keyHandler) ta.removeEventListener('keydown', keyHandler);
+    pickerDocHandler = null;
+    keyHandler = null;
+  };
+
+  pickerPopup = document.createElement('div');
+  pickerPopup.className = 'slash-popup lang-picker';
+
+  const movePickerSel = (delta) => {
+    const items = pickerPopup?.querySelectorAll('.slash-item');
+    if (!items) return;
+    items[pickerIdx]?.classList.remove('active');
+    pickerIdx = (pickerIdx + delta + items.length) % items.length;
+    items[pickerIdx]?.classList.add('active');
+    items[pickerIdx]?.scrollIntoView({ block: 'nearest' });
+  };
+
+  CODE_LANGUAGES.forEach((lang, i) => {
+    const item = document.createElement('div');
+    item.className = `slash-item${i === 0 ? ' active' : ''}`;
+    const icon = document.createElement('span');
+    icon.className = 'slash-item-icon';
+    icon.textContent = lang.icon;
+    const label = document.createElement('span');
+    label.className = 'slash-item-label';
+    label.textContent = lang.label;
+    item.appendChild(icon);
+    item.appendChild(label);
+    item.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      close();
+      onSelect(lang.id);
+    });
+    pickerPopup.appendChild(item);
+  });
+
+  keyHandler = (e) => {
+    if (!pickerPopup) return;
+    if (e.key === 'ArrowDown') { e.preventDefault(); e.stopPropagation(); movePickerSel(1); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); e.stopPropagation(); movePickerSel(-1); }
+    else if ((e.key === 'Enter' || e.key === 'Tab') && !e.isComposing) {
+      e.preventDefault(); e.stopPropagation();
+      const lang = CODE_LANGUAGES[pickerIdx]?.id ?? '';
+      close();
+      onSelect(lang);
+    }
+    else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); close(); }
+  };
+
+  pickerDocHandler = (e) => {
+    if (pickerPopup && !pickerPopup.contains(e.target)) close();
+  };
+
+  ta.addEventListener('keydown', keyHandler);
+  document.addEventListener('pointerdown', pickerDocHandler);
+
+  const coords = getCaretCoords(ta);
+  pickerPopup.style.left = `${coords.left}px`;
+  pickerPopup.style.top = `${coords.top}px`;
+  document.body.appendChild(pickerPopup);
+}
+
 function showPopup(ta, commands) {
   hidePopup();
   popup = document.createElement('div');
@@ -119,7 +234,6 @@ function showPopup(ta, commands) {
   commands.forEach((cmd, i) => {
     const item = document.createElement('div');
     item.className = `slash-item${i === 0 ? ' active' : ''}`;
-    item.dataset.id = cmd.id;
     const icon = document.createElement('span');
     icon.className = 'slash-item-icon';
     icon.textContent = cmd.icon;
@@ -128,10 +242,24 @@ function showPopup(ta, commands) {
     label.textContent = cmd.label;
     item.appendChild(icon);
     item.appendChild(label);
-    item.addEventListener('mousedown', (e) => { e.preventDefault(); });
-    item.addEventListener('click', () => { applyCommand(ta, cmd.id); });
+    item.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (cmd.id === 'codeblock') {
+        const savedSlashPos = slashPos;
+        hidePopup();
+        showCodeBlockPicker(ta, (lang) => applyCodeblockAtSlashPos(ta, savedSlashPos, lang));
+      } else {
+        applyCommand(ta, cmd.id);
+      }
+    });
     popup.appendChild(item);
   });
+
+  docDownHandler = (e) => {
+    if (popup && !popup.contains(e.target)) hidePopup();
+  };
+  document.addEventListener('pointerdown', docDownHandler);
 
   const coords = getCaretCoords(ta);
   popup.style.left = `${coords.left}px`;
@@ -140,6 +268,10 @@ function showPopup(ta, commands) {
 }
 
 function hidePopup() {
+  if (docDownHandler) {
+    document.removeEventListener('pointerdown', docDownHandler);
+    docDownHandler = null;
+  }
   popup?.remove();
   popup = null;
   slashPos = -1;
@@ -161,6 +293,6 @@ function getCaretCoords(ta) {
 
   return {
     left: Math.min(approxLeft, window.innerWidth - 220),
-    top: Math.min(approxTop, window.innerHeight - 240),
+    top: Math.min(approxTop, window.innerHeight - 320),
   };
 }
