@@ -66,7 +66,7 @@ function handleInput(ta) {
 
   const match = lineText.match(/^(\s*)\/(\S*)$/);
   if (match) {
-    slashPos = lineStart + match[1].length;
+    const newSlashPos = lineStart + match[1].length;
     const query = match[2].toLowerCase();
     filteredCommands = COMMANDS.filter(
       (cmd) => query === '' || cmd.aliases.some((a) => a.toLowerCase().startsWith(query))
@@ -74,6 +74,7 @@ function handleInput(ta) {
     if (filteredCommands.length > 0) {
       activeIdx = 0;
       showPopup(ta, filteredCommands);
+      slashPos = newSlashPos; // showPopup이 hidePopup을 호출해 slashPos를 -1로 초기화하므로 반드시 showPopup 이후에 설정
       return;
     }
   }
