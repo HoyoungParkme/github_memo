@@ -68,13 +68,15 @@ function handleInput(ta) {
   if (match) {
     const newSlashPos = lineStart + match[1].length;
     const query = match[2].toLowerCase();
-    filteredCommands = COMMANDS.filter(
+    const matched = COMMANDS.filter(
       (cmd) => query === '' || cmd.aliases.some((a) => a.toLowerCase().startsWith(query))
     );
-    if (filteredCommands.length > 0) {
+    if (matched.length > 0) {
       activeIdx = 0;
-      showPopup(ta, filteredCommands);
-      slashPos = newSlashPos; // showPopup이 hidePopup을 호출해 slashPos를 -1로 초기화하므로 반드시 showPopup 이후에 설정
+      showPopup(ta, matched);
+      // showPopup → hidePopup 순서로 slashPos/filteredCommands가 초기화되므로 반드시 showPopup 이후에 복원
+      slashPos = newSlashPos;
+      filteredCommands = matched;
       return;
     }
   }
